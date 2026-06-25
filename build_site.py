@@ -194,17 +194,17 @@ HTML = """<!DOCTYPE html>
   .hero .subtitle { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--muted); }
   .hero .subtitle em { color: var(--accent); font-style: normal; font-weight: 700; }
 
-  /* Toggle bar */
-  .toggle-bar { display: flex; align-items: center; gap: 8px; margin: 4px 0 20px; }
-  .toggle-bar span { font-size: 13px; color: var(--muted); }
-  .tog { padding: 5px 16px; border: 1px solid var(--line); border-radius: 999px;
-        background: var(--card); color: var(--muted); cursor: pointer; font-size: 13px; }
+  .tog { padding: 5px 14px; border: 1px solid var(--line); border-radius: 999px;
+        background: var(--bg); color: var(--muted); cursor: pointer; font-size: 12px; }
   .tog.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
   /* Format sections (home) */
   .fmt-sec { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
         padding: 20px 24px; margin-bottom: 20px; }
-  .fmt-sec h2 { margin: 0 0 6px; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+  .fmt-sec-hdr { display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .fmt-sec-hdr h2 { margin: 0; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+  .fmt-tog { display: flex; gap: 6px; align-items: center; }
   .badge-new { background: #7c3aed; color: #fff; font-size: 11px; font-weight: 700;
         padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
   .seed-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -342,18 +342,13 @@ function renderHome() {
   const c2 = DATA.seed_champ_counts[2] || 0;
 
   let html = `
-    <div class="hero">
-      <h1>Over the Last ${n} Years</h1>
-      <p class="subtitle">
-        The #1 seed won <em>${c1} of ${n}</em> championships
+    <div class="card" style="margin-bottom:20px;padding:24px 28px">
+      <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.1;margin:0 0 10px">Over the Last ${n} Years</h1>
+      <p style="font-size:clamp(1rem,2.5vw,1.15rem);color:var(--muted);margin:0">
+        The #1 seed won <strong style="color:var(--accent)">${c1} of ${n}</strong> championships
         &nbsp;&middot;&nbsp;
-        The #2 seed won <em>${c2} of ${n}</em>
+        The #2 seed won <strong style="color:var(--accent)">${c2} of ${n}</strong>
       </p>
-    </div>
-    <div class="toggle-bar">
-      <span>View as:</span>
-      <button class="tog active" data-m="bar"   onclick="setViewMode('bar')">Bar Chart</button>
-      <button class="tog"        data-m="table" onclick="setViewMode('table')">Table</button>
     </div>`;
 
   DATA.formats.forEach((fmt, i) => {
@@ -361,9 +356,16 @@ function renderHome() {
     const s1  = (sim[1] || 0).toFixed(1);
     const s2  = (sim[2] || 0).toFixed(1);
     const isNew = fmt === '10-team double bye';
+    const isFirst = i === 0;
     html += `
     <div class="fmt-sec">
-      <h2>${FMT_LABEL[fmt]}${isNew ? ' <span class="badge-new">NEW 2027</span>' : ''}</h2>
+      <div class="fmt-sec-hdr">
+        <h2>${FMT_LABEL[fmt]}${isNew ? ' <span class="badge-new">NEW 2027</span>' : ''}</h2>
+        ${isFirst ? `<div class="fmt-tog">
+          <button class="tog active" data-m="bar"   onclick="setViewMode('bar')">Bar Chart</button>
+          <button class="tog"        data-m="table" onclick="setViewMode('table')">Table</button>
+        </div>` : ''}
+      </div>
       <div class="seed-row">
         <div class="seed-stat"><div class="sv">${s1}%</div><div class="sk">#1 Seed avg win %</div></div>
         <div class="seed-stat"><div class="sv">${s2}%</div><div class="sk">#2 Seed avg win %</div></div>
@@ -407,8 +409,7 @@ function drawFmtChart(idx, fmt) {
       data: {
         labels: seeds.map(s => '#' + s),
         datasets: [
-          { label: 'Simulated %', data: seeds.map(s => sim[s]),              backgroundColor: BLUE },
-          { label: 'Actual %',    data: seeds.map(s => DATA.overall_actual[s] || 0), backgroundColor: AMBER }
+          { label: 'Simulated %', data: seeds.map(s => sim[s]), backgroundColor: BLUE }
         ]
       },
       options: { responsive: true,

@@ -187,10 +187,40 @@ SIX_BYES = {
     ],
 }
 
+# Same QF structure as SIX_BYES but SF matchups are determined by reseeding after QF.
+# The 4 QF winners are reseeded 1-4 by original seed: best vs worst, 2nd vs 3rd.
+# No pre-drawn QF→SF connectors; SF boxes show reseed labels instead.
+SIX_BYES_RESEEDED = {
+    "title": "10-Team, 6 Byes + Reseed after QF",
+    "games": [
+        {"id": "o1", "col": 0, "lane": 0.5, "top": "Seed 8", "bottom": "Seed 9"},
+        {"id": "o2", "col": 0, "lane": 3.5, "top": "Seed 7", "bottom": "Seed 10"},
+        {"id": "qf1", "col": 1, "lane": 0, "top": "Seed 1 (bye)", "bottom": ""},
+        {"id": "qf2", "col": 1, "lane": 1, "top": "Seed 4", "bottom": "Seed 5"},
+        {"id": "qf3", "col": 1, "lane": 2, "top": "Seed 3", "bottom": "Seed 6"},
+        {"id": "qf4", "col": 1, "lane": 3, "top": "Seed 2 (bye)", "bottom": ""},
+        {"id": "sf1", "col": 2, "lane": 0.5, "top": "Top seed left", "bottom": "Bottom seed left",
+         "top_seed": False, "bottom_seed": False},
+        {"id": "sf2", "col": 2, "lane": 2.5, "top": "2nd seed left", "bottom": "3rd seed left",
+         "top_seed": False, "bottom_seed": False},
+        {"id": "fin", "col": 3, "lane": 1.5, "top": "", "bottom": ""},
+        {"id": "champ", "col": 4, "lane": 1.5, "top": "Champion", "single": True},
+    ],
+    "connectors": [
+        # Opening → QF (same as SIX_BYES)
+        ("o1", "qf1", "bottom"),
+        ("o2", "qf4", "bottom"),
+        # No QF→SF connectors (reseeding means SF matchups are determined after QF)
+        ("sf1", "fin", "top"), ("sf2", "fin", "bottom"),
+        ("fin", "champ", "top"),
+    ],
+}
+
 BRACKETS = {
     "double_bye": DOUBLE_BYE,
     "no_byes": NO_BYES,
     "six_byes": SIX_BYES,
+    "six_byes_reseeded": SIX_BYES_RESEEDED,
 }
 
 def main():

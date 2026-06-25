@@ -62,10 +62,23 @@ def bracket_10_six_byes(s):
     wsf2 = sim_game(wq2, wq3)
     return sim_game(wsf1, wsf2)
 
+def bracket_10_six_byes_reseeded(s):
+    w7  = sim_game(s[7],  s[10])
+    w8  = sim_game(s[8],  s[9])
+    wq1 = sim_game(s[1], w8)
+    wq2 = sim_game(s[2], w7)
+    wq3 = sim_game(s[3], s[6])
+    wq4 = sim_game(s[4], s[5])
+    r1, r2, r3, r4 = sorted([wq1, wq2, wq3, wq4], key=lambda t: t["seed"])
+    wsf1 = sim_game(r1, r4)
+    wsf2 = sim_game(r2, r3)
+    return sim_game(wsf1, wsf2)
+
 FORMATS = {
-    "10-team double bye":     bracket_10_double_bye,
-    "8-team no byes":         bracket_8_no_byes,
-    "10-team 6 single byes":  bracket_10_six_byes,
+    "10-team double bye":      bracket_10_double_bye,
+    "8-team no byes":          bracket_8_no_byes,
+    "10-team 6 single byes":   bracket_10_six_byes,
+    "10-team 6 byes reseeded": bracket_10_six_byes_reseeded,
 }
 
 YEARS = [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]

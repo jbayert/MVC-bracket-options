@@ -8,8 +8,8 @@ import json
 import os
 from collections import defaultdict
 
-YEARS = [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
-FORMATS = ["10-team double bye", "8-team no byes", "10-team 6 single byes"]
+YEARS = [2025, 2024, 2023, 2022, 2021, 2019, 2018, 2017, 2016, 2015]
+FORMATS = ["10-team double bye", "8-team no byes", "10-team 6 single byes", "10-team 6 byes reseeded"]
 
 def read_csv(path):
     with open(path, encoding="utf-8") as f:
@@ -122,9 +122,10 @@ def build_data():
     }
 
 BRACKET_IMGS = {
-    "10-team double bye": "brackets/double_bye.svg",
-    "8-team no byes": "brackets/no_byes.svg",
-    "10-team 6 single byes": "brackets/six_byes.svg",
+    "10-team double bye":      "brackets/double_bye.svg",
+    "8-team no byes":          "brackets/no_byes.svg",
+    "10-team 6 single byes":   "brackets/six_byes.svg",
+    "10-team 6 byes reseeded": "brackets/six_byes_reseeded.svg",
 }
 
 HTML = """<!DOCTYPE html>
@@ -169,6 +170,8 @@ HTML = """<!DOCTYPE html>
 
   /* Cards */
   .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .cards-2x2 { display: grid; gap: 16px; grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 600px) { .cards-2x2 { grid-template-columns: 1fr; } }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
   .card h3 { margin: 0 0 10px; font-size: 15px; }
 
@@ -266,6 +269,7 @@ HTML = """<!DOCTYPE html>
   .cg { margin-bottom: 8px; }
   .cg .cg-mu { font-size: 11px; color: var(--muted); line-height: 1.4; }
   .cg .cg-w { font-weight: 700; font-size: 13px; }
+  .cg-pct { font-weight: 400; font-size: 12px; color: var(--accent); }
   .chalk-champ { margin-top: 14px; background: #f0fdf4; border: 1px solid #86efac;
         border-radius: 8px; padding: 12px 16px; }
   .chalk-champ .cc-lbl { font-size: 11px; font-weight: 700; color: var(--good);
@@ -294,14 +298,16 @@ let chalkFormat = DATA.formats[0];
 let currentYear = null;
 
 const FMT_LABEL = {
-  '10-team double bye':    'If it was a 10-team with a double bye',
-  '8-team no byes':        'If it was an 8-team bracket',
-  '10-team 6 single byes': 'If it was a 10-team with 6 byes'
+  '10-team double bye':      'If it was a 10-team with a double bye',
+  '8-team no byes':          'If it was an 8-team bracket',
+  '10-team 6 single byes':   'If it was a 10-team with 6 byes',
+  '10-team 6 byes reseeded': 'If it was a 10-team with 6 byes and reseeding after quarterfinals'
 };
 const FMT_SHORT = {
-  '10-team double bye':    'Double Bye',
-  '8-team no byes':        '8-Team',
-  '10-team 6 single byes': '6 Byes'
+  '10-team double bye':      'Double Bye',
+  '8-team no byes':          '8-Team',
+  '10-team 6 single byes':   '6 Byes',
+  '10-team 6 byes reseeded': '6 Byes + Reseed'
 };
 const BLUE = '#2563eb';
 const AMBER = '#f59e0b';
@@ -376,8 +382,16 @@ function renderHome() {
     </div>`;
   });
 
+  html += `
+    <div class="fmt-sec" id="sec-compare">
+      <div class="fmt-sec-hdr"><h2>Format Comparison</h2></div>
+      <p class="sub">Average simulated championship % by seed across all ${n} years, for each format vs. actual results.</p>
+      <div id="compare-chart"></div>
+    </div>`;
+
   document.getElementById('main').innerHTML = html;
   DATA.formats.forEach((fmt, i) => drawFmtChart(i, fmt));
+  drawCompareChart();
 }
 
 function setViewMode(mode) {
@@ -389,6 +403,9 @@ function setViewMode(mode) {
 function drawFmtChart(idx, fmt) {
   const el = document.getElementById('fc' + idx);
   if (!el) return;
+  if (!DATA.overall_sim[fmt] || !Object.keys(DATA.overall_sim[fmt]).length) {
+    el.innerHTML = '<p class="sub">Simulation data not yet available.</p>'; return;
+  }
   charts = charts.filter(c => { if (c.canvas && c.canvas.parentElement === el) { c.destroy(); return false; } return true; });
 
   const sim   = DATA.overall_sim[fmt];
@@ -407,17 +424,46 @@ function drawFmtChart(idx, fmt) {
       type: 'bar',
       data: {
         labels: seeds.map(s => '#' + s),
-        datasets: [
-          { label: 'Simulated %', data: seeds.map(s => sim[s]), backgroundColor: BLUE }
-        ]
+        datasets: [{ label: 'Simulated %', data: seeds.map(s => sim[s]), backgroundColor: BLUE }]
       },
       options: { responsive: true,
-        plugins: { legend: { labels: { boxWidth: 12 } } },
-        scales:  { x: { ticks: { font: { size: 11 } } },
-                   y: { beginAtZero: true, ticks: { callback: v => v + '%' } } }
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { title: { display: true, text: 'Seed', font: { size: 12 } }, ticks: { font: { size: 11 } } },
+          y: { title: { display: true, text: 'Simulated %', font: { size: 12 } },
+               beginAtZero: true, ticks: { callback: v => v + '%' } }
+        }
       }
     }));
   }
+}
+
+function drawCompareChart() {
+  const el = document.getElementById('compare-chart');
+  if (!el) return;
+  const fmts = DATA.formats.filter(f => DATA.overall_sim[f] && Object.keys(DATA.overall_sim[f]).length > 0);
+  const cols = [
+    ...fmts.map(f => ({ label: FMT_SHORT[f], num: s => DATA.overall_sim[f][s] || 0 })),
+    { label: 'Actual', num: s => (DATA.seed_champ_counts[s]||0) / DATA.n_years * 100 }
+  ];
+  let html = '<div style="display:grid;gap:12px">';
+  [1, 2].forEach(seed => {
+    const vals = cols.map(c => c.num(seed));
+    const best = Math.max(...vals);
+    html += `<div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Seed #${seed} avg championship %</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">`;
+    cols.forEach((c, i) => {
+      const isBest = vals[i] === best;
+      html += `<div style="flex:1;min-width:90px;background:${isBest ? 'var(--accent)' : 'var(--bg)'};
+        color:${isBest ? '#fff' : 'var(--text)'};border-radius:10px;padding:12px 14px;text-align:center">
+        <div style="font-size:1.6rem;font-weight:800;line-height:1">${vals[i].toFixed(1)}%</div>
+        <div style="font-size:11px;margin-top:4px;opacity:.8">${c.label}</div>
+      </div>`;
+    });
+    html += '</div></div>';
+  });
+  el.innerHTML = html + '</div>';
 }
 
 /* ── About ── */
@@ -526,42 +572,21 @@ function renderYear(year) {
   let html = `<h1>${year} Arch Madness</h1>
     <div class="quick-nav">
       <button class="qbtn" onclick="scrollToSection('sec-sims')">Simulations</button>
-      <button class="qbtn" onclick="scrollToSection('sec-field')">Teams</button>
-      <button class="qbtn" onclick="scrollToSection('sec-actual')">Actual Results</button>
       <button class="qbtn" onclick="scrollToSection('sec-chalk')">Chalk Bracket</button>
+      <button class="qbtn" onclick="scrollToSection('sec-actual')">Actual Results</button>
+      <button class="qbtn" onclick="scrollToSection('sec-field')">Teams</button>
     </div>`;
 
   // Simulations
-  html += `<div id="sec-sims" class="sec"><h2>Title Odds by Format</h2><div class="cards">`;
-
-  // Actual winner card
-  if (champ) {
-    const cSt = teams.find(t => t.team === champ.champion);
-    const em  = cSt ? (cSt.adj_em >= 0 ? '+' : '') + cSt.adj_em.toFixed(1) : '';
-    const sc  = champ.champion_score && champ.runner_up_score
-                ? `${champ.champion_score}–${champ.runner_up_score}` : '';
-    html += `<div class="card" style="border-left:4px solid var(--good)">
-      <h3 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Actual Winner</h3>
-      <div class="pick" style="font-size:1.2rem">${champ.champion}</div>
-      <div style="color:var(--muted);font-size:13px;margin-bottom:12px">
-        Seed #${champ.champion_seed || '?'}${sc ? ' &middot; ' + sc : ''}
-      </div>
-      ${cSt ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <div class="stat-box"><div class="bv">${em}</div><div class="bk">AdjEM</div></div>
-        <div class="stat-box"><div class="bv">${cSt.adj_t.toFixed(1)}</div><div class="bk">AdjT</div></div>
-        <div class="stat-box"><div class="bv">#${cSt.trank}</div><div class="bk">T-Rank</div></div>
-      </div>` : ''}
-      ${champ.notes ? `<p class="sub" style="margin-top:10px;font-size:12px">${champ.notes}</p>` : ''}
-    </div>`;
-  }
+  html += `<div id="sec-sims" class="sec"><h2>Title Odds by Format</h2><div class="cards-2x2">`;
 
   DATA.formats.forEach((f, i) => {
-    const ana     = DATA.analysis[year][f];
-    const correct = ana.model_correct === '1';
+    const ana = DATA.analysis[year]?.[f];
+    if (!ana) return;
     html += `<div class="card">
       <h3>${FMT_LABEL[f]}</h3>
       <div class="pick">${ana.model_pick_team} <span class="pct">${ana.model_pick_win_pct.toFixed(1)}%</span></div>
-      <div>Model pick &middot; <span class="badge ${correct?'y':'n'}">${correct?'CORRECT':'MISS'}</span></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Model pick</div>
       <canvas id="yrc${i}"></canvas>
       <ul class="toplist">`;
     DATA.summary[year][f].slice(0, 5).forEach(t => {
@@ -571,26 +596,14 @@ function renderYear(year) {
   });
   html += `</div></div>`;
 
-  // Field
-  html += `<div id="sec-field" class="sec"><h2>Teams</h2>
-    <table><thead><tr><th>Seed</th><th>Team</th><th>T-Rank</th><th>AdjEM</th><th>AdjT</th><th>Record</th></tr></thead><tbody>`;
-  teams.forEach(t => {
-    const cls = t.team === cName ? ' class="champ"' : '';
-    const em  = (t.adj_em >= 0 ? '+' : '') + t.adj_em.toFixed(1);
-    html += `<tr${cls}><td>${t.seed}</td><td>${t.team}</td><td>${t.trank}</td><td>${em}</td><td>${t.adj_t.toFixed(1)}</td><td>${t.record}</td></tr>`;
-  });
-  html += `</tbody></table></div>`;
-
   // Actual results
   html += `<div id="sec-actual" class="sec"><h2>Actual Result</h2>`;
   if (champ) {
     const cSt = teams.find(t => t.team === champ.champion);
     const rSt = teams.find(t => t.team === champ.runner_up);
-    const sc  = champ.champion_score && champ.runner_up_score
-                ? `${champ.champion_score}–${champ.runner_up_score}` : '';
     html += `<div class="result-cards">`;
-    html += rcCard('win',  'Champion',  champ.champion,  champ.champion_seed,  sc, cSt);
-    html += rcCard('lose', 'Runner-Up', champ.runner_up, champ.runner_up_seed, sc, rSt);
+    html += rcCard('win',  'Champion',  champ.champion,  champ.champion_seed,  '', cSt);
+    html += rcCard('lose', 'Runner-Up', champ.runner_up, champ.runner_up_seed, '', rSt);
     html += `</div>`;
     if (champ.notes) html += `<p class="sub" style="margin-top:10px">${champ.notes}</p>`;
   }
@@ -603,6 +616,16 @@ function renderYear(year) {
     <div class="chalk-opts" id="chalk-opts"></div>
     <div id="chalk-out"></div>
   </div>`;
+
+  // Field
+  html += `<div id="sec-field" class="sec"><h2>Teams</h2>
+    <table><thead><tr><th>Seed</th><th>Team</th><th>T-Rank</th><th>AdjEM</th><th>AdjT</th><th>Record</th></tr></thead><tbody>`;
+  teams.forEach(t => {
+    const cls = t.team === cName ? ' class="champ"' : '';
+    const em  = (t.adj_em >= 0 ? '+' : '') + t.adj_em.toFixed(1);
+    html += `<tr${cls}><td>${t.seed}</td><td>${t.team}</td><td>${t.trank}</td><td>${em}</td><td>${t.adj_t.toFixed(1)}</td><td>${t.record}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
 
   m.innerHTML = html;
 
@@ -620,6 +643,7 @@ function renderYear(year) {
 
   // Year charts
   DATA.formats.forEach((f, i) => {
+    if (!DATA.summary[year]?.[f]) return;
     const rows = DATA.summary[year][f].slice().sort((a,b) => a.seed - b.seed);
     charts.push(new Chart(document.getElementById('yrc' + i), {
       type: 'bar',
@@ -657,68 +681,81 @@ function setChalkFmt(fmt) {
   renderChalk(currentYear);
 }
 
+function normalCDF(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const p = 0.3989423 * Math.exp(-z*z/2) * t *
+    (0.31938153 + t*(-0.356563782 + t*(1.781477937 + t*(-1.821255978 + t*1.330274429))));
+  return z > 0 ? 1 - p : p;
+}
+function winProb(a, b) {
+  if (!a || !b) return a ? 1 : 0;
+  const sigma = 11.9 * Math.sqrt((a.adj_t + b.adj_t) / 2 / 67.5);
+  return normalCDF((a.adj_em - b.adj_em) / sigma);
+}
+
 function chalkBracket(fmt, teams) {
   const s = {};
   teams.forEach(t => s[t.seed] = t);
   const w = (a, b) => !a ? b : !b ? a : (a.adj_em >= b.adj_em ? a : b);
+  const wp = (a, b) => { const wn = w(a,b), ls = wn===a?b:a; return Math.round(winProb(wn,ls)*100); };
   const mu = (a, b) => `#${a ? a.seed : '?'} ${a ? a.team : '?'} vs #${b ? b.seed : '?'} ${b ? b.team : '?'}`;
   const rounds = [];
 
   if (fmt === '10-team double bye') {
     const r1 = [w(s[3],s[10]), w(s[4],s[9]), w(s[5],s[8]), w(s[6],s[7])];
     rounds.push({ name: 'First Round', games: [
-      { mu: mu(s[3],s[10]), winner: r1[0] }, { mu: mu(s[4],s[9]), winner: r1[1] },
-      { mu: mu(s[5],s[8]), winner: r1[2] }, { mu: mu(s[6],s[7]), winner: r1[3] },
+      { mu: mu(s[3],s[10]), winner: r1[0], pct: wp(s[3],s[10]) }, { mu: mu(s[4],s[9]), winner: r1[1], pct: wp(s[4],s[9]) },
+      { mu: mu(s[5],s[8]), winner: r1[2], pct: wp(s[5],s[8]) }, { mu: mu(s[6],s[7]), winner: r1[3], pct: wp(s[6],s[7]) },
     ]});
     const qf = [w(r1[0],r1[1]), w(r1[2],r1[3])];
     rounds.push({ name: 'Quarterfinals', games: [
-      { mu: `${r1[0]?r1[0].team:'?'} vs ${r1[1]?r1[1].team:'?'}`, winner: qf[0] },
-      { mu: `${r1[2]?r1[2].team:'?'} vs ${r1[3]?r1[3].team:'?'}`, winner: qf[1] },
+      { mu: `${r1[0]?r1[0].team:'?'} vs ${r1[1]?r1[1].team:'?'}`, winner: qf[0], pct: wp(r1[0],r1[1]) },
+      { mu: `${r1[2]?r1[2].team:'?'} vs ${r1[3]?r1[3].team:'?'}`, winner: qf[1], pct: wp(r1[2],r1[3]) },
     ]});
     const sf = [w(s[1],qf[0]), w(s[2],qf[1])];
     rounds.push({ name: 'Semifinals', games: [
-      { mu: `#1 ${s[1]?s[1].team:'?'} vs ${qf[0]?qf[0].team:'?'}`, winner: sf[0] },
-      { mu: `#2 ${s[2]?s[2].team:'?'} vs ${qf[1]?qf[1].team:'?'}`, winner: sf[1] },
+      { mu: `#1 ${s[1]?s[1].team:'?'} vs ${qf[0]?qf[0].team:'?'}`, winner: sf[0], pct: wp(s[1],qf[0]) },
+      { mu: `#2 ${s[2]?s[2].team:'?'} vs ${qf[1]?qf[1].team:'?'}`, winner: sf[1], pct: wp(s[2],qf[1]) },
     ]});
     const champ = w(sf[0],sf[1]);
-    rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ }]});
+    rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ, pct: wp(sf[0],sf[1]) }]});
     return { rounds, champion: champ };
   }
 
   if (fmt === '10-team 6 single byes') {
     const r1 = [w(s[7],s[10]), w(s[8],s[9])];
     rounds.push({ name: 'First Round', games: [
-      { mu: mu(s[7],s[10]), winner: r1[0] }, { mu: mu(s[8],s[9]), winner: r1[1] },
+      { mu: mu(s[7],s[10]), winner: r1[0], pct: wp(s[7],s[10]) }, { mu: mu(s[8],s[9]), winner: r1[1], pct: wp(s[8],s[9]) },
     ]});
     const qf = [w(s[1],r1[1]), w(s[2],r1[0]), w(s[3],s[6]), w(s[4],s[5])];
     rounds.push({ name: 'Quarterfinals', games: [
-      { mu: `#1 ${s[1]?s[1].team:'?'} vs ${r1[1]?r1[1].team:'?'}`, winner: qf[0] },
-      { mu: `#2 ${s[2]?s[2].team:'?'} vs ${r1[0]?r1[0].team:'?'}`, winner: qf[1] },
-      { mu: mu(s[3],s[6]), winner: qf[2] }, { mu: mu(s[4],s[5]), winner: qf[3] },
+      { mu: `#1 ${s[1]?s[1].team:'?'} vs ${r1[1]?r1[1].team:'?'}`, winner: qf[0], pct: wp(s[1],r1[1]) },
+      { mu: `#2 ${s[2]?s[2].team:'?'} vs ${r1[0]?r1[0].team:'?'}`, winner: qf[1], pct: wp(s[2],r1[0]) },
+      { mu: mu(s[3],s[6]), winner: qf[2], pct: wp(s[3],s[6]) }, { mu: mu(s[4],s[5]), winner: qf[3], pct: wp(s[4],s[5]) },
     ]});
     const sf = [w(qf[0],qf[3]), w(qf[1],qf[2])];
     rounds.push({ name: 'Semifinals', games: [
-      { mu: `${qf[0]?qf[0].team:'?'} vs ${qf[3]?qf[3].team:'?'}`, winner: sf[0] },
-      { mu: `${qf[1]?qf[1].team:'?'} vs ${qf[2]?qf[2].team:'?'}`, winner: sf[1] },
+      { mu: `${qf[0]?qf[0].team:'?'} vs ${qf[3]?qf[3].team:'?'}`, winner: sf[0], pct: wp(qf[0],qf[3]) },
+      { mu: `${qf[1]?qf[1].team:'?'} vs ${qf[2]?qf[2].team:'?'}`, winner: sf[1], pct: wp(qf[1],qf[2]) },
     ]});
     const champ = w(sf[0],sf[1]);
-    rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ }]});
+    rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ, pct: wp(sf[0],sf[1]) }]});
     return { rounds, champion: champ };
   }
 
   // 8-team no byes
   const r1 = [w(s[1],s[8]), w(s[2],s[7]), w(s[3],s[6]), w(s[4],s[5])];
   rounds.push({ name: 'First Round', games: [
-    { mu: mu(s[1],s[8]), winner: r1[0] }, { mu: mu(s[2],s[7]), winner: r1[1] },
-    { mu: mu(s[3],s[6]), winner: r1[2] }, { mu: mu(s[4],s[5]), winner: r1[3] },
+    { mu: mu(s[1],s[8]), winner: r1[0], pct: wp(s[1],s[8]) }, { mu: mu(s[2],s[7]), winner: r1[1], pct: wp(s[2],s[7]) },
+    { mu: mu(s[3],s[6]), winner: r1[2], pct: wp(s[3],s[6]) }, { mu: mu(s[4],s[5]), winner: r1[3], pct: wp(s[4],s[5]) },
   ]});
   const sf = [w(r1[0],r1[3]), w(r1[1],r1[2])];
   rounds.push({ name: 'Semifinals', games: [
-    { mu: `${r1[0]?r1[0].team:'?'} vs ${r1[3]?r1[3].team:'?'}`, winner: sf[0] },
-    { mu: `${r1[1]?r1[1].team:'?'} vs ${r1[2]?r1[2].team:'?'}`, winner: sf[1] },
+    { mu: `${r1[0]?r1[0].team:'?'} vs ${r1[3]?r1[3].team:'?'}`, winner: sf[0], pct: wp(r1[0],r1[3]) },
+    { mu: `${r1[1]?r1[1].team:'?'} vs ${r1[2]?r1[2].team:'?'}`, winner: sf[1], pct: wp(r1[1],r1[2]) },
   ]});
   const champ = w(sf[0],sf[1]);
-  rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ }]});
+  rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ, pct: wp(sf[0],sf[1]) }]});
   return { rounds, champion: champ };
 }
 
@@ -732,7 +769,7 @@ function renderChalk(year) {
   rounds.forEach(r => {
     html += `<div class="chalk-round"><h4>${r.name}</h4>`;
     r.games.forEach(g => {
-      html += `<div class="cg"><div class="cg-mu">${g.mu}</div><div class="cg-w">&rarr; ${g.winner ? g.winner.team : '?'}</div></div>`;
+      html += `<div class="cg"><div class="cg-mu">${g.mu}</div><div class="cg-w">&rarr; ${g.winner ? g.winner.team : '?'} <span class="cg-pct">${g.pct}%</span></div></div>`;
     });
     html += '</div>';
   });

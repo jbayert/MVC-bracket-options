@@ -1,31 +1,41 @@
 year,format,top_adjEM_team,top_adjEM_seed,top_adjEM_win_pct,top_trank_team,top_trank_seed,top_trank_win_pct,top_seed_team,top_seed_adjEM,top_seed_win_pct,model_pick_team,model_pick_seed,model_pick_win_pct,actual_champion,actual_champion_seed,actual_champion_adjEM,actual_champion_trank,actual_sim_win_pct,model_correct
-2015,10-team double bye,Wichita St.,1,53.62,Wichita St.,1,53.62,Wichita St.,22.4,53.62,Wichita St.,1,53.62,northern iowa,2,22.2,17.0,43.74,0
-2015,8-team no byes,Wichita St.,1,45.16,Wichita St.,1,45.16,Wichita St.,22.4,45.16,Northern Iowa,2,51.65,northern iowa,2,22.2,17.0,51.65,1
-2015,10-team 6 single byes,Wichita St.,1,44.02,Wichita St.,1,44.02,Wichita St.,22.4,44.02,Northern Iowa,2,52.84,northern iowa,2,22.2,17.0,52.84,1
-2016,10-team double bye,Wichita St.,1,77.95,Wichita St.,1,77.95,Wichita St.,22.1,77.95,Wichita St.,1,77.95,northern iowa,4,13.1,56.0,13.01,0
-2016,8-team no byes,Wichita St.,1,70.25,Wichita St.,1,70.25,Wichita St.,22.1,70.25,Wichita St.,1,70.25,northern iowa,4,13.1,56.0,13.66,0
-2016,10-team 6 single byes,Wichita St.,1,70.88,Wichita St.,1,70.88,Wichita St.,22.1,70.88,Wichita St.,1,70.88,northern iowa,4,13.1,56.0,13.15,0
-2017,10-team double bye,Wichita St.,2,78.96,Wichita St.,2,78.96,Illinois St.,15.2,19.45,Wichita St.,2,78.96,wichita state,2,24.9,12.0,78.96,1
-2017,8-team no byes,Wichita St.,2,80.97,Wichita St.,2,80.97,Illinois St.,15.2,15.93,Wichita St.,2,80.97,wichita state,2,24.9,12.0,80.97,1
-2017,10-team 6 single byes,Wichita St.,2,80.68,Wichita St.,2,80.68,Illinois St.,15.2,16.52,Wichita St.,2,80.68,wichita state,2,24.9,12.0,80.68,1
-2018,10-team double bye,Loyola Chicago,1,71.13,Loyola Chicago,1,71.13,Loyola Chicago,15.1,71.13,Loyola Chicago,1,71.13,loyola chicago,1,15.1,41.0,71.13,1
-2018,8-team no byes,Loyola Chicago,1,61.36,Loyola Chicago,1,61.36,Loyola Chicago,15.1,61.36,Loyola Chicago,1,61.36,loyola chicago,1,15.1,41.0,61.36,1
-2018,10-team 6 single byes,Loyola Chicago,1,58.49,Loyola Chicago,1,58.49,Loyola Chicago,15.1,58.49,Loyola Chicago,1,58.49,loyola chicago,1,15.1,41.0,58.49,1
-2019,10-team double bye,Loyola Chicago,1,43.18,Loyola Chicago,1,43.18,Loyola Chicago,6.0,43.18,Loyola Chicago,1,43.18,bradley,5,0.6,153.0,4.8,0
-2019,8-team no byes,Loyola Chicago,1,34.08,Loyola Chicago,1,34.08,Loyola Chicago,6.0,34.08,Loyola Chicago,1,34.08,bradley,5,0.6,153.0,8.89,0
-2019,10-team 6 single byes,Loyola Chicago,1,34.55,Loyola Chicago,1,34.55,Loyola Chicago,6.0,34.55,Loyola Chicago,1,34.55,bradley,5,0.6,153.0,9.25,0
-2021,10-team double bye,Loyola Chicago,1,76.82,Loyola Chicago,1,76.82,Loyola Chicago,20.5,76.82,Loyola Chicago,1,76.82,loyola chicago,1,20.5,13.0,76.82,1
-2021,8-team no byes,Loyola Chicago,1,77.2,Loyola Chicago,1,77.2,Loyola Chicago,20.5,77.2,Loyola Chicago,1,77.2,loyola chicago,1,20.5,13.0,77.2,1
-2021,10-team 6 single byes,Loyola Chicago,1,77.79,Loyola Chicago,1,77.79,Loyola Chicago,20.5,77.79,Loyola Chicago,1,77.79,loyola chicago,1,20.5,13.0,77.79,1
-2022,10-team double bye,Loyola Chicago,4,33.7,Loyola Chicago,4,33.7,Northern Iowa,8.1,19.47,Loyola Chicago,4,33.7,loyola chicago,4,14.6,39.0,33.7,1
-2022,8-team no byes,Loyola Chicago,4,38.16,Loyola Chicago,4,38.16,Northern Iowa,8.1,13.88,Loyola Chicago,4,38.16,loyola chicago,4,14.6,39.0,38.16,1
-2022,10-team 6 single byes,Loyola Chicago,4,38.33,Loyola Chicago,4,38.33,Northern Iowa,8.1,12.84,Loyola Chicago,4,38.33,loyola chicago,4,14.6,39.0,38.33,1
-2023,10-team double bye,Drake,2,52.3,Drake,2,52.3,Bradley,8.2,29.65,Drake,2,52.3,drake,2,13.2,53.0,52.3,1
-2023,8-team no byes,Drake,2,54.23,Drake,2,54.23,Bradley,8.2,20.02,Drake,2,54.23,drake,2,13.2,53.0,54.23,1
-2023,10-team 6 single byes,Drake,2,55.58,Drake,2,55.58,Bradley,8.2,19.87,Drake,2,55.58,drake,2,13.2,53.0,55.58,1
-2024,10-team double bye,Indiana St.,3,33.47,Indiana St.,3,33.47,Bradley,12.8,21.45,Drake,2,38.26,drake,2,14.7,51.0,38.26,1
-2024,8-team no byes,Indiana St.,3,35.92,Indiana St.,3,35.92,Bradley,12.8,23.73,Indiana St.,3,35.92,drake,2,14.7,51.0,28.96,0
-2024,10-team 6 single byes,Indiana St.,3,36.45,Indiana St.,3,36.45,Bradley,12.8,23.04,Indiana St.,3,36.45,drake,2,14.7,51.0,28.73,0
-2025,10-team double bye,Drake,1,64.38,Drake,1,64.38,Drake,15.4,64.38,Drake,1,64.38,drake,1,15.4,52.0,64.38,1
-2025,8-team no byes,Drake,1,60.67,Drake,1,60.67,Drake,15.4,60.67,Drake,1,60.67,drake,1,15.4,52.0,60.67,1
-2025,10-team 6 single byes,Drake,1,60.47,Drake,1,60.47,Drake,15.4,60.47,Drake,1,60.47,drake,1,15.4,52.0,60.47,1
+2015,10-team double bye,Wichita St.,1,54.36,Wichita St.,1,54.36,Wichita St.,22.4,54.36,Wichita St.,1,54.36,northern iowa,2,22.2,17.0,43.16,0
+2015,8-team no byes,Wichita St.,1,45.35,Wichita St.,1,45.35,Wichita St.,22.4,45.35,Northern Iowa,2,51.76,northern iowa,2,22.2,17.0,51.76,1
+2015,10-team 6 single byes,Wichita St.,1,45.07,Wichita St.,1,45.07,Wichita St.,22.4,45.07,Northern Iowa,2,51.87,northern iowa,2,22.2,17.0,51.87,1
+2015,10-team 6 byes reseeded,Wichita St.,1,48.96,Wichita St.,1,48.96,Wichita St.,22.4,48.96,Wichita St.,1,48.96,northern iowa,2,22.2,17.0,47.91,0
+2016,10-team double bye,Wichita St.,1,78.01,Wichita St.,1,78.01,Wichita St.,22.1,78.01,Wichita St.,1,78.01,northern iowa,4,13.1,56.0,12.97,0
+2016,8-team no byes,Wichita St.,1,70.08,Wichita St.,1,70.08,Wichita St.,22.1,70.08,Wichita St.,1,70.08,northern iowa,4,13.1,56.0,13.77,0
+2016,10-team 6 single byes,Wichita St.,1,70.72,Wichita St.,1,70.72,Wichita St.,22.1,70.72,Wichita St.,1,70.72,northern iowa,4,13.1,56.0,12.52,0
+2016,10-team 6 byes reseeded,Wichita St.,1,73.18,Wichita St.,1,73.18,Wichita St.,22.1,73.18,Wichita St.,1,73.18,northern iowa,4,13.1,56.0,12.62,0
+2017,10-team double bye,Wichita St.,2,78.25,Wichita St.,2,78.25,Illinois St.,15.2,20.19,Wichita St.,2,78.25,wichita state,2,24.9,12.0,78.25,1
+2017,8-team no byes,Wichita St.,2,81.68,Wichita St.,2,81.68,Illinois St.,15.2,15.28,Wichita St.,2,81.68,wichita state,2,24.9,12.0,81.68,1
+2017,10-team 6 single byes,Wichita St.,2,80.63,Wichita St.,2,80.63,Illinois St.,15.2,16.4,Wichita St.,2,80.63,wichita state,2,24.9,12.0,80.63,1
+2017,10-team 6 byes reseeded,Wichita St.,2,80.62,Wichita St.,2,80.62,Illinois St.,15.2,16.24,Wichita St.,2,80.62,wichita state,2,24.9,12.0,80.62,1
+2018,10-team double bye,Loyola Chicago,1,72.21,Loyola Chicago,1,72.21,Loyola Chicago,15.1,72.21,Loyola Chicago,1,72.21,loyola chicago,1,15.1,41.0,72.21,1
+2018,8-team no byes,Loyola Chicago,1,62.54,Loyola Chicago,1,62.54,Loyola Chicago,15.1,62.54,Loyola Chicago,1,62.54,loyola chicago,1,15.1,41.0,62.54,1
+2018,10-team 6 single byes,Loyola Chicago,1,57.93,Loyola Chicago,1,57.93,Loyola Chicago,15.1,57.93,Loyola Chicago,1,57.93,loyola chicago,1,15.1,41.0,57.93,1
+2018,10-team 6 byes reseeded,Loyola Chicago,1,58.52,Loyola Chicago,1,58.52,Loyola Chicago,15.1,58.52,Loyola Chicago,1,58.52,loyola chicago,1,15.1,41.0,58.52,1
+2019,10-team double bye,Loyola Chicago,1,43.67,Loyola Chicago,1,43.67,Loyola Chicago,6.0,43.67,Loyola Chicago,1,43.67,bradley,5,0.6,153.0,4.84,0
+2019,8-team no byes,Loyola Chicago,1,33.84,Loyola Chicago,1,33.84,Loyola Chicago,6.0,33.84,Loyola Chicago,1,33.84,bradley,5,0.6,153.0,9.6,0
+2019,10-team 6 single byes,Loyola Chicago,1,34.24,Loyola Chicago,1,34.24,Loyola Chicago,6.0,34.24,Loyola Chicago,1,34.24,bradley,5,0.6,153.0,9.27,0
+2019,10-team 6 byes reseeded,Loyola Chicago,1,35.62,Loyola Chicago,1,35.62,Loyola Chicago,6.0,35.62,Loyola Chicago,1,35.62,bradley,5,0.6,153.0,9.39,0
+2021,10-team double bye,Loyola Chicago,1,76.84,Loyola Chicago,1,76.84,Loyola Chicago,20.5,76.84,Loyola Chicago,1,76.84,loyola chicago,1,20.5,13.0,76.84,1
+2021,8-team no byes,Loyola Chicago,1,77.08,Loyola Chicago,1,77.08,Loyola Chicago,20.5,77.08,Loyola Chicago,1,77.08,loyola chicago,1,20.5,13.0,77.08,1
+2021,10-team 6 single byes,Loyola Chicago,1,77.86,Loyola Chicago,1,77.86,Loyola Chicago,20.5,77.86,Loyola Chicago,1,77.86,loyola chicago,1,20.5,13.0,77.86,1
+2021,10-team 6 byes reseeded,Loyola Chicago,1,79.46,Loyola Chicago,1,79.46,Loyola Chicago,20.5,79.46,Loyola Chicago,1,79.46,loyola chicago,1,20.5,13.0,79.46,1
+2022,10-team double bye,Loyola Chicago,4,33.7,Loyola Chicago,4,33.7,Northern Iowa,8.1,19.41,Loyola Chicago,4,33.7,loyola chicago,4,14.6,39.0,33.7,1
+2022,8-team no byes,Loyola Chicago,4,38.1,Loyola Chicago,4,38.1,Northern Iowa,8.1,13.58,Loyola Chicago,4,38.1,loyola chicago,4,14.6,39.0,38.1,1
+2022,10-team 6 single byes,Loyola Chicago,4,37.75,Loyola Chicago,4,37.75,Northern Iowa,8.1,13.67,Loyola Chicago,4,37.75,loyola chicago,4,14.6,39.0,37.75,1
+2022,10-team 6 byes reseeded,Loyola Chicago,4,35.74,Loyola Chicago,4,35.74,Northern Iowa,8.1,16.41,Loyola Chicago,4,35.74,loyola chicago,4,14.6,39.0,35.74,1
+2023,10-team double bye,Drake,2,52.72,Drake,2,52.72,Bradley,8.2,28.62,Drake,2,52.72,drake,2,13.2,53.0,52.72,1
+2023,8-team no byes,Drake,2,54.48,Drake,2,54.48,Bradley,8.2,19.75,Drake,2,54.48,drake,2,13.2,53.0,54.48,1
+2023,10-team 6 single byes,Drake,2,56.17,Drake,2,56.17,Bradley,8.2,19.8,Drake,2,56.17,drake,2,13.2,53.0,56.17,1
+2023,10-team 6 byes reseeded,Drake,2,53.76,Drake,2,53.76,Bradley,8.2,22.6,Drake,2,53.76,drake,2,13.2,53.0,53.76,1
+2024,10-team double bye,Indiana St.,3,32.63,Indiana St.,3,32.63,Bradley,12.8,22.02,Drake,2,38.31,drake,2,14.7,51.0,38.31,1
+2024,8-team no byes,Indiana St.,3,34.6,Indiana St.,3,34.6,Bradley,12.8,24.54,Indiana St.,3,34.6,drake,2,14.7,51.0,29.29,0
+2024,10-team 6 single byes,Indiana St.,3,35.34,Indiana St.,3,35.34,Bradley,12.8,23.58,Indiana St.,3,35.34,drake,2,14.7,51.0,29.19,0
+2024,10-team 6 byes reseeded,Indiana St.,3,34.88,Indiana St.,3,34.88,Bradley,12.8,24.46,Indiana St.,3,34.88,drake,2,14.7,51.0,30.57,0
+2025,10-team double bye,Drake,1,64.83,Drake,1,64.83,Drake,15.4,64.83,Drake,1,64.83,drake,1,15.4,52.0,64.83,1
+2025,8-team no byes,Drake,1,60.54,Drake,1,60.54,Drake,15.4,60.54,Drake,1,60.54,drake,1,15.4,52.0,60.54,1
+2025,10-team 6 single byes,Drake,1,60.5,Drake,1,60.5,Drake,15.4,60.5,Drake,1,60.5,drake,1,15.4,52.0,60.5,1
+2025,10-team 6 byes reseeded,Drake,1,63.44,Drake,1,63.44,Drake,15.4,63.44,Drake,1,63.44,drake,1,15.4,52.0,63.44,1

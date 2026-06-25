@@ -114,10 +114,37 @@ def bracket_10_six_byes(teams):
     return sim_game(wsf1, wsf2)
 
 
+def bracket_10_six_byes_reseeded(teams):
+    """
+    Same as bracket_10_six_byes through the quarterfinals, then the 4 QF
+    winners are reseeded 1-4 by original seed before the semifinals.
+    Best remaining seed plays worst, 2nd plays 3rd.
+    """
+    s = {t["seed"]: t for t in teams}
+
+    # Opening
+    w7  = sim_game(s[7],  s[10])
+    w8  = sim_game(s[8],  s[9])
+
+    # QF (same as six_byes)
+    wq1 = sim_game(s[1], w8)
+    wq2 = sim_game(s[2], w7)
+    wq3 = sim_game(s[3], s[6])
+    wq4 = sim_game(s[4], s[5])
+
+    # Reseed: sort by original seed, best (lowest number) vs worst
+    r1, r2, r3, r4 = sorted([wq1, wq2, wq3, wq4], key=lambda t: t["seed"])
+    wsf1 = sim_game(r1, r4)
+    wsf2 = sim_game(r2, r3)
+
+    return sim_game(wsf1, wsf2)
+
+
 FORMATS = {
-    "10-team double bye":   bracket_10_double_bye,
-    "8-team no byes":       bracket_8_no_byes,
-    "10-team 6 single byes": bracket_10_six_byes,
+    "10-team double bye":      bracket_10_double_bye,
+    "8-team no byes":          bracket_8_no_byes,
+    "10-team 6 single byes":   bracket_10_six_byes,
+    "10-team 6 byes reseeded": bracket_10_six_byes_reseeded,
 }
 
 # ---------------------------------------------------------------------------

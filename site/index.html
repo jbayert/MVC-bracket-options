@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arch Madness Bracket Models</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#127936;</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --nav: #0f172a; --accent: #2563eb; --good: #16a34a; --bad: #dc2626;
+    --bg: #f1f5f9; --card: #ffffff; --line: #e2e8f0; --text: #1e293b; --muted: #64748b;
+    --hl: #fef3c7;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Arial, sans-serif;
+         background: var(--bg); color: var(--text); }
+
+  /* Nav */
+  nav { background: var(--nav); color: #fff; display: flex; align-items: center;
+        gap: 4px; padding: 0 16px; position: sticky; top: 0; z-index: 10; min-height: 52px; }
+  .brand { font-weight: 700; font-size: 16px; white-space: nowrap; padding-right: 12px; }
+  nav a.tab { color: #cbd5e1; padding: 14px 12px; cursor: pointer; font-size: 14px;
+        text-decoration: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+  nav a.tab:hover { color: #fff; }
+  nav a.tab.active { color: #fff; border-bottom-color: var(--accent); font-weight: 600; }
+  .year-sel { background: #1e293b; border: 1px solid #334155; color: #cbd5e1;
+        padding: 5px 10px; border-radius: 6px; font-size: 14px; cursor: pointer; margin: 0 4px;
+        -webkit-appearance: none; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+  .year-sel:focus { outline: 2px solid var(--accent); }
+  .spacer { flex: 1; }
+
+  /* Layout */
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 28px 0 12px; }
+  p.sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+
+  /* Cards */
+  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .card h3 { margin: 0 0 10px; font-size: 15px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  tr.champ { background: #fef9c3; font-weight: 600; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px;
+        font-weight: 700; color: #fff; }
+  .badge.y { background: var(--good); } .badge.n { background: var(--bad); }
+  .pick { font-size: 17px; font-weight: 700; margin: 2px 0 4px; }
+  .pick .pct { color: var(--accent); }
+  .toplist { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; }
+  .toplist li { display: flex; justify-content: space-between; padding: 3px 0;
+        border-bottom: 1px dashed var(--line); }
+
+  /* Home hero */
+  .hero { padding: 36px 0 20px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1.1; margin-bottom: 10px; }
+  .hero .subtitle { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--muted); }
+  .hero .subtitle em { color: var(--accent); font-style: normal; font-weight: 700; }
+
+  /* Toggle bar */
+  .toggle-bar { display: flex; align-items: center; gap: 8px; margin: 4px 0 20px; }
+  .toggle-bar span { font-size: 13px; color: var(--muted); }
+  .tog { padding: 5px 16px; border: 1px solid var(--line); border-radius: 999px;
+        background: var(--card); color: var(--muted); cursor: pointer; font-size: 13px; }
+  .tog.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Format sections (home) */
+  .fmt-sec { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+        padding: 20px 24px; margin-bottom: 20px; }
+  .fmt-sec h2 { margin: 0 0 6px; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+  .badge-new { background: #7c3aed; color: #fff; font-size: 11px; font-weight: 700;
+        padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
+  .seed-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .seed-stat { background: var(--bg); border-radius: 8px; padding: 10px 16px; }
+  .seed-stat .sv { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .seed-stat .sk { font-size: 12px; color: var(--muted); }
+
+  /* Accordion */
+  details.accordion { border: 1px solid var(--line); border-radius: 8px;
+        margin-bottom: 14px; overflow: hidden; }
+  details.accordion summary { padding: 10px 14px; cursor: pointer; font-size: 14px;
+        font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details.accordion summary::-webkit-details-marker { display: none; }
+  details.accordion summary::after { content: '\25BE'; color: var(--muted); }
+  details.accordion[open] summary::after { content: '\25B4'; }
+  details.accordion img { max-width: 100%; display: block;
+        border-top: 1px solid var(--line); padding: 12px; }
+
+  /* Year page quick-nav */
+  .quick-nav { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 0 16px;
+        border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+  .qbtn { padding: 7px 16px; border: 1px solid var(--line); border-radius: 999px;
+        background: var(--card); cursor: pointer; font-size: 13px; font-weight: 500; }
+  .qbtn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Section flash */
+  .sec { scroll-margin-top: 68px; border-radius: 10px; }
+  @keyframes flash { 0%,100%{background:transparent} 30%,70%{background:var(--hl)} }
+  .sec.flash { animation: flash 1.4s ease; }
+
+  /* Result cards */
+  .result-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+  @media (max-width: 540px) { .result-cards { grid-template-columns: 1fr; } }
+  .rc { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .rc.win { border-left: 4px solid var(--good); }
+  .rc.lose { border-left: 4px solid var(--muted); }
+  .rc .rc-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted);
+        letter-spacing: .06em; margin-bottom: 4px; }
+  .rc .rc-name { font-size: 1.15rem; font-weight: 700; }
+  .rc .rc-seed { font-size: 0.85rem; color: var(--muted); font-weight: 400; }
+  .rc .rc-score { font-size: 0.9rem; color: var(--muted); margin-bottom: 10px; }
+  .rc .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .rc .stat-box { background: var(--bg); border-radius: 6px; padding: 8px; text-align: center; }
+  .rc .stat-box .bv { font-weight: 700; font-size: 1rem; color: var(--accent); }
+  .rc .stat-box .bk { font-size: 11px; color: var(--muted); }
+
+  /* Chalk */
+  .chalk-sec { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+        padding: 20px 24px; margin-top: 24px; }
+  .chalk-sec h2 { margin: 0 0 4px; }
+  .chalk-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+  .copt { padding: 6px 16px; border: 1px solid var(--line); border-radius: 999px;
+        background: var(--bg); cursor: pointer; font-size: 13px; }
+  .copt.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chalk-rounds { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .chalk-round { background: var(--bg); border-radius: 8px; padding: 12px 16px; min-width: 155px; }
+  .chalk-round h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
+        color: var(--muted); letter-spacing: .06em; }
+  .cg { margin-bottom: 8px; }
+  .cg .cg-mu { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .cg .cg-w { font-weight: 700; font-size: 13px; }
+  .chalk-champ { margin-top: 14px; background: #f0fdf4; border: 1px solid #86efac;
+        border-radius: 8px; padding: 12px 16px; }
+  .chalk-champ .cc-lbl { font-size: 11px; font-weight: 700; color: var(--good);
+        text-transform: uppercase; letter-spacing: .06em; }
+  .chalk-champ .cc-name { font-size: 1.15rem; font-weight: 700; margin-top: 4px; }
+  .chalk-champ .cc-stats { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* About */
+  .about code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .about pre { background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 8px;
+        overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  .about img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px;
+        display: block; margin: 8px 0 20px; }
+
+  canvas { max-height: 240px; }
+</style>
+</head>
+<body>
+<nav id="nav"></nav>
+<main id="main"></main>
+<script>
+const DATA = {"years": [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025], "formats": ["10-team double bye", "8-team no byes", "10-team 6 single byes"], "teams": {"2015": [{"seed": 1, "team": "Wichita St.", "trank": 14, "adj_em": 22.4, "adj_t": 62.0, "record": "29-5"}, {"seed": 2, "team": "Northern Iowa", "trank": 17, "adj_em": 22.2, "adj_t": 57.8, "record": "31-4"}, {"seed": 3, "team": "Indiana St.", "trank": 170, "adj_em": -0.2, "adj_t": 66.7, "record": "14-16"}, {"seed": 4, "team": "Illinois St.", "trank": 61, "adj_em": 11.6, "adj_t": 64.8, "record": "21-13"}, {"seed": 5, "team": "Evansville", "trank": 115, "adj_em": 4.6, "adj_t": 65.8, "record": "23-12"}, {"seed": 6, "team": "Loyola Chicago", "trank": 135, "adj_em": 2.7, "adj_t": 60.7, "record": "22-13"}, {"seed": 7, "team": "Drake", "trank": 249, "adj_em": -7.2, "adj_t": 58.8, "record": "8-22"}, {"seed": 8, "team": "Missouri St.", "trank": 270, "adj_em": -8.1, "adj_t": 61.2, "record": "9-20"}, {"seed": 9, "team": "Southern Illinois", "trank": 192, "adj_em": -2.5, "adj_t": 62.2, "record": "11-21"}, {"seed": 10, "team": "Bradley", "trank": 245, "adj_em": -6.3, "adj_t": 61.8, "record": "8-24"}], "2016": [{"seed": 1, "team": "Wichita St.", "trank": 10, "adj_em": 22.1, "adj_t": 65.9, "record": "25-9"}, {"seed": 2, "team": "Evansville", "trank": 77, "adj_em": 9.4, "adj_t": 68.6, "record": "24-9"}, {"seed": 3, "team": "Illinois St.", "trank": 115, "adj_em": 5.0, "adj_t": 67.4, "record": "17-14"}, {"seed": 4, "team": "Northern Iowa", "trank": 56, "adj_em": 13.1, "adj_t": 62.8, "record": "22-13"}, {"seed": 5, "team": "Southern Illinois", "trank": 139, "adj_em": 2.4, "adj_t": 69.6, "record": "22-10"}, {"seed": 6, "team": "Indiana St.", "trank": 186, "adj_em": -2.0, "adj_t": 70.3, "record": "14-17"}, {"seed": 7, "team": "Missouri St.", "trank": 219, "adj_em": -4.9, "adj_t": 68.9, "record": "12-19"}, {"seed": 8, "team": "Loyola Chicago", "trank": 179, "adj_em": -1.2, "adj_t": 64.8, "record": "14-17"}, {"seed": 9, "team": "Bradley", "trank": 328, "adj_em": -15.0, "adj_t": 67.2, "record": "4-27"}, {"seed": 10, "team": "Drake", "trank": 260, "adj_em": -8.8, "adj_t": 65.4, "record": "6-24"}], "2017": [{"seed": 1, "team": "Illinois St.", "trank": 40, "adj_em": 15.2, "adj_t": 64.8, "record": "28-7"}, {"seed": 2, "team": "Wichita St.", "trank": 12, "adj_em": 24.9, "adj_t": 68.6, "record": "31-5"}, {"seed": 3, "team": "Northern Iowa", "trank": 181, "adj_em": -1.1, "adj_t": 63.4, "record": "14-16"}, {"seed": 4, "team": "Southern Illinois", "trank": 179, "adj_em": -1.1, "adj_t": 65.4, "record": "17-16"}, {"seed": 5, "team": "Loyola Chicago", "trank": 97, "adj_em": 6.4, "adj_t": 65.7, "record": "18-14"}, {"seed": 6, "team": "Missouri St.", "trank": 116, "adj_em": 4.2, "adj_t": 66.0, "record": "17-16"}, {"seed": 7, "team": "Bradley", "trank": 230, "adj_em": -5.8, "adj_t": 67.7, "record": "13-20"}, {"seed": 8, "team": "Evansville", "trank": 122, "adj_em": 3.7, "adj_t": 66.6, "record": "16-17"}, {"seed": 9, "team": "Indiana St.", "trank": 196, "adj_em": -2.1, "adj_t": 69.7, "record": "11-20"}, {"seed": 10, "team": "Drake", "trank": 247, "adj_em": -7.5, "adj_t": 69.7, "record": "7-24"}], "2018": [{"seed": 1, "team": "Loyola Chicago", "trank": 41, "adj_em": 15.1, "adj_t": 65.2, "record": "32-6"}, {"seed": 2, "team": "Southern Illinois", "trank": 148, "adj_em": 1.5, "adj_t": 66.7, "record": "20-13"}, {"seed": 3, "team": "Illinois St.", "trank": 142, "adj_em": 1.9, "adj_t": 68.9, "record": "18-15"}, {"seed": 4, "team": "Drake", "trank": 146, "adj_em": 1.7, "adj_t": 68.1, "record": "17-17"}, {"seed": 5, "team": "Bradley", "trank": 123, "adj_em": 4.1, "adj_t": 65.8, "record": "20-13"}, {"seed": 6, "team": "Indiana St.", "trank": 144, "adj_em": 1.8, "adj_t": 69.9, "record": "13-18"}, {"seed": 7, "team": "Missouri St.", "trank": 119, "adj_em": 4.8, "adj_t": 65.5, "record": "18-15"}, {"seed": 8, "team": "Evansville", "trank": 135, "adj_em": 2.3, "adj_t": 65.6, "record": "17-15"}, {"seed": 9, "team": "Northern Iowa", "trank": 104, "adj_em": 6.4, "adj_t": 62.5, "record": "16-16"}, {"seed": 10, "team": "Valparaiso", "trank": 163, "adj_em": 0.1, "adj_t": 69.7, "record": "15-17"}], "2019": [{"seed": 1, "team": "Loyola Chicago", "trank": 105, "adj_em": 6.0, "adj_t": 62.7, "record": "20-14"}, {"seed": 2, "team": "Drake", "trank": 119, "adj_em": 5.1, "adj_t": 69.0, "record": "24-10"}, {"seed": 3, "team": "Southern Illinois", "trank": 163, "adj_em": -0.2, "adj_t": 65.7, "record": "17-15"}, {"seed": 4, "team": "Missouri St.", "trank": 176, "adj_em": -0.7, "adj_t": 65.9, "record": "16-16"}, {"seed": 5, "team": "Bradley", "trank": 153, "adj_em": 0.6, "adj_t": 64.9, "record": "20-15"}, {"seed": 6, "team": "Northern Iowa", "trank": 171, "adj_em": -0.6, "adj_t": 64.1, "record": "16-18"}, {"seed": 7, "team": "Illinois St.", "trank": 211, "adj_em": -3.7, "adj_t": 66.7, "record": "17-16"}, {"seed": 8, "team": "Indiana St.", "trank": 201, "adj_em": -3.2, "adj_t": 68.6, "record": "15-16"}, {"seed": 9, "team": "Valparaiso", "trank": 220, "adj_em": -4.8, "adj_t": 64.9, "record": "15-18"}, {"seed": 10, "team": "Evansville", "trank": 257, "adj_em": -7.5, "adj_t": 69.5, "record": "11-21"}], "2021": [{"seed": 1, "team": "Loyola Chicago", "trank": 13, "adj_em": 20.5, "adj_t": 63.4, "record": "26-5"}, {"seed": 2, "team": "Drake", "trank": 79, "adj_em": 10.1, "adj_t": 66.2, "record": "26-5"}, {"seed": 3, "team": "Missouri St.", "trank": 105, "adj_em": 6.7, "adj_t": 68.8, "record": "17-7"}, {"seed": 4, "team": "Indiana St.", "trank": 124, "adj_em": 3.3, "adj_t": 66.7, "record": "15-10"}, {"seed": 5, "team": "Evansville", "trank": 207, "adj_em": -4.7, "adj_t": 62.0, "record": "9-16"}, {"seed": 6, "team": "Valparaiso", "trank": 198, "adj_em": -3.2, "adj_t": 66.9, "record": "10-18"}, {"seed": 7, "team": "Northern Iowa", "trank": 175, "adj_em": -0.7, "adj_t": 69.0, "record": "10-15"}, {"seed": 8, "team": "Bradley", "trank": 166, "adj_em": 0.1, "adj_t": 65.8, "record": "12-16"}, {"seed": 9, "team": "Southern Illinois", "trank": 188, "adj_em": -2.4, "adj_t": 66.0, "record": "12-14"}, {"seed": 10, "team": "Illinois St.", "trank": 210, "adj_em": -5.1, "adj_t": 69.0, "record": "7-18"}], "2022": [{"seed": 1, "team": "Northern Iowa", "trank": 94, "adj_em": 8.1, "adj_t": 67.3, "record": "20-12"}, {"seed": 2, "team": "Missouri St.", "trank": 80, "adj_em": 10.3, "adj_t": 67.1, "record": "23-11"}, {"seed": 3, "team": "Drake", "trank": 82, "adj_em": 9.5, "adj_t": 66.0, "record": "25-11"}, {"seed": 4, "team": "Loyola Chicago", "trank": 39, "adj_em": 14.6, "adj_t": 64.6, "record": "25-8"}, {"seed": 5, "team": "Bradley", "trank": 102, "adj_em": 6.6, "adj_t": 67.3, "record": "17-14"}, {"seed": 6, "team": "Southern Illinois", "trank": 126, "adj_em": 3.8, "adj_t": 62.1, "record": "16-15"}, {"seed": 7, "team": "Valparaiso", "trank": 207, "adj_em": -3.3, "adj_t": 65.2, "record": "14-18"}, {"seed": 8, "team": "Illinois St.", "trank": 201, "adj_em": -2.5, "adj_t": 68.1, "record": "13-20"}, {"seed": 9, "team": "Indiana St.", "trank": 204, "adj_em": -3.0, "adj_t": 69.5, "record": "11-20"}, {"seed": 10, "team": "Evansville", "trank": 324, "adj_em": -14.3, "adj_t": 63.9, "record": "6-24"}], "2023": [{"seed": 1, "team": "Bradley", "trank": 92, "adj_em": 8.2, "adj_t": 65.2, "record": "25-10"}, {"seed": 2, "team": "Drake", "trank": 53, "adj_em": 13.2, "adj_t": 66.3, "record": "27-8"}, {"seed": 3, "team": "Southern Illinois", "trank": 144, "adj_em": 1.6, "adj_t": 63.7, "record": "23-10"}, {"seed": 4, "team": "Belmont", "trank": 127, "adj_em": 3.8, "adj_t": 68.3, "record": "21-11"}, {"seed": 5, "team": "Indiana St.", "trank": 95, "adj_em": 7.8, "adj_t": 70.5, "record": "23-13"}, {"seed": 6, "team": "Missouri St.", "trank": 145, "adj_em": 1.6, "adj_t": 61.9, "record": "17-15"}, {"seed": 7, "team": "Murray St.", "trank": 228, "adj_em": -4.6, "adj_t": 66.6, "record": "17-15"}, {"seed": 8, "team": "Northern Iowa", "trank": 221, "adj_em": -3.9, "adj_t": 67.3, "record": "14-18"}, {"seed": 9, "team": "Evansville", "trank": 352, "adj_em": -17.8, "adj_t": 69.5, "record": "5-27"}, {"seed": 10, "team": "Illinois St.", "trank": 297, "adj_em": -10.6, "adj_t": 64.9, "record": "11-21"}, {"seed": 11, "team": "Illinois Chicago", "trank": 285, "adj_em": -9.4, "adj_t": 68.9, "record": "12-20"}, {"seed": 12, "team": "Valparaiso", "trank": 290, "adj_em": -10.0, "adj_t": 67.9, "record": "11-21"}], "2024": [{"seed": 1, "team": "Bradley", "trank": 60, "adj_em": 12.8, "adj_t": 66.3, "record": "23-12"}, {"seed": 2, "team": "Drake", "trank": 51, "adj_em": 14.7, "adj_t": 67.9, "record": "28-7"}, {"seed": 3, "team": "Indiana St.", "trank": 42, "adj_em": 16.9, "adj_t": 70.7, "record": "32-7"}, {"seed": 4, "team": "Northern Iowa", "trank": 106, "adj_em": 6.8, "adj_t": 66.6, "record": "19-14"}, {"seed": 5, "team": "Belmont", "trank": 101, "adj_em": 7.3, "adj_t": 71.3, "record": "20-13"}, {"seed": 6, "team": "Southern Illinois", "trank": 116, "adj_em": 5.2, "adj_t": 64.3, "record": "19-13"}, {"seed": 7, "team": "Illinois St.", "trank": 193, "adj_em": -2.5, "adj_t": 63.8, "record": "15-17"}, {"seed": 8, "team": "Murray St.", "trank": 155, "adj_em": 0.9, "adj_t": 64.5, "record": "12-20"}, {"seed": 9, "team": "Missouri St.", "trank": 142, "adj_em": 2.1, "adj_t": 67.9, "record": "17-16"}, {"seed": 10, "team": "Evansville", "trank": 210, "adj_em": -3.8, "adj_t": 68.6, "record": "17-18"}, {"seed": 11, "team": "Illinois Chicago", "trank": 178, "adj_em": -1.1, "adj_t": 68.2, "record": "12-21"}, {"seed": 12, "team": "Valparaiso", "trank": 294, "adj_em": -10.3, "adj_t": 68.0, "record": "7-25"}], "2025": [{"seed": 1, "team": "Drake", "trank": 52, "adj_em": 15.4, "adj_t": 59.1, "record": "31-4"}, {"seed": 2, "team": "Bradley", "trank": 86, "adj_em": 8.7, "adj_t": 66.0, "record": "28-9"}, {"seed": 3, "team": "Northern Iowa", "trank": 104, "adj_em": 5.7, "adj_t": 65.4, "record": "20-13"}, {"seed": 4, "team": "Belmont", "trank": 125, "adj_em": 3.9, "adj_t": 70.9, "record": "22-11"}, {"seed": 5, "team": "Illinois St.", "trank": 121, "adj_em": 4.2, "adj_t": 66.0, "record": "22-14"}, {"seed": 6, "team": "Illinois Chicago", "trank": 189, "adj_em": -2.2, "adj_t": 69.3, "record": "18-14"}, {"seed": 7, "team": "Murray St.", "trank": 151, "adj_em": 0.6, "adj_t": 64.9, "record": "16-17"}, {"seed": 8, "team": "Southern Illinois", "trank": 174, "adj_em": -1.3, "adj_t": 68.1, "record": "14-19"}, {"seed": 9, "team": "Indiana St.", "trank": 196, "adj_em": -3.0, "adj_t": 72.6, "record": "14-18"}, {"seed": 10, "team": "Evansville", "trank": 257, "adj_em": -7.2, "adj_t": 67.1, "record": "11-21"}, {"seed": 11, "team": "Valparaiso", "trank": 207, "adj_em": -3.8, "adj_t": 68.2, "record": "15-19"}, {"seed": 12, "team": "Missouri St.", "trank": 201, "adj_em": -3.2, "adj_t": 64.0, "record": "9-23"}]}, "champions": {"2015": {"champion": "Northern Iowa", "champion_seed": "2", "runner_up": "Illinois State", "runner_up_seed": "4", "champion_score": "69", "runner_up_score": "60", "notes": ""}, "2016": {"champion": "Northern Iowa", "champion_seed": "4", "runner_up": "Evansville", "runner_up_seed": "2", "champion_score": "56", "runner_up_score": "54", "notes": "Evansville rallied from 17-point deficit"}, "2017": {"champion": "Wichita State", "champion_seed": "2", "runner_up": "Illinois State", "runner_up_seed": "1", "champion_score": "71", "runner_up_score": "51", "notes": "Wichita State's last MVC tournament (left for AAC July 2017)"}, "2018": {"champion": "Loyola Chicago", "champion_seed": "1", "runner_up": "Illinois State", "runner_up_seed": "3", "champion_score": "65", "runner_up_score": "49", "notes": "Loyola went on to Final Four as 11-seed"}, "2019": {"champion": "Bradley", "champion_seed": "5", "runner_up": "Northern Iowa", "runner_up_seed": "6", "champion_score": "57", "runner_up_score": "54", "notes": "Lowest combined seeds in MVC championship history; Bradley trailed by 18"}, "2021": {"champion": "Loyola Chicago", "champion_seed": "1", "runner_up": "Drake", "runner_up_seed": "2", "champion_score": "75", "runner_up_score": "65", "notes": "Northern Iowa forfeited QF vs Drake due to COVID protocols"}, "2022": {"champion": "Loyola Chicago", "champion_seed": "4", "runner_up": "Drake", "runner_up_seed": "3", "champion_score": "64", "runner_up_score": "58", "notes": "Loyola's last MVC tournament (left conference after 2022)"}, "2023": {"champion": "Drake", "champion_seed": "2", "runner_up": "Bradley", "runner_up_seed": "1", "champion_score": "", "runner_up_score": "", "notes": "First year with all 12 teams; score not confirmed"}, "2024": {"champion": "Drake", "champion_seed": "2", "runner_up": "Indiana State", "runner_up_seed": "3", "champion_score": "84", "runner_up_score": "80", "notes": "Tucker DeVries 27 pts MVP; ISU was -2.5 favorite"}, "2025": {"champion": "Drake", "champion_seed": "1", "runner_up": "Bradley", "runner_up_seed": "2", "champion_score": "63", "runner_up_score": "48", "notes": "Bennett Stirtz 24 pts MVP; Drake's 3rd consecutive title"}}, "summary": {"2015": {"10-team double bye": [{"team": "Wichita St.", "seed": 1, "win_pct": 53.62, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 2, "win_pct": 43.74, "actual_champion": 1}, {"team": "Illinois St.", "seed": 4, "win_pct": 2.41, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 6, "win_pct": 0.16, "actual_champion": 0}, {"team": "Evansville", "seed": 5, "win_pct": 0.06, "actual_champion": 0}, {"team": "Indiana St.", "seed": 3, "win_pct": 0.01, "actual_champion": 0}, {"team": "Drake", "seed": 7, "win_pct": 0.0, "actual_champion": 0}, {"team": "Missouri St.", "seed": 8, "win_pct": 0.0, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Bradley", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "8-team no byes": [{"team": "Northern Iowa", "seed": 2, "win_pct": 51.65, "actual_champion": 1}, {"team": "Wichita St.", "seed": 1, "win_pct": 45.16, "actual_champion": 0}, {"team": "Illinois St.", "seed": 4, "win_pct": 2.77, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 6, "win_pct": 0.21, "actual_champion": 0}, {"team": "Evansville", "seed": 5, "win_pct": 0.17, "actual_champion": 0}, {"team": "Indiana St.", "seed": 3, "win_pct": 0.04, "actual_champion": 0}, {"team": "Drake", "seed": 7, "win_pct": 0.0, "actual_champion": 0}, {"team": "Missouri St.", "seed": 8, "win_pct": 0.0, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Bradley", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Northern Iowa", "seed": 2, "win_pct": 52.84, "actual_champion": 1}, {"team": "Wichita St.", "seed": 1, "win_pct": 44.02, "actual_champion": 0}, {"team": "Illinois St.", "seed": 4, "win_pct": 2.68, "actual_champion": 0}, {"team": "Evansville", "seed": 5, "win_pct": 0.2, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 6, "win_pct": 0.2, "actual_champion": 0}, {"team": "Indiana St.", "seed": 3, "win_pct": 0.05, "actual_champion": 0}, {"team": "Bradley", "seed": 10, "win_pct": 0.01, "actual_champion": 0}, {"team": "Drake", "seed": 7, "win_pct": 0.0, "actual_champion": 0}, {"team": "Missouri St.", "seed": 8, "win_pct": 0.0, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 9, "win_pct": 0.0, "actual_champion": 0}]}, "2016": {"10-team double bye": [{"team": "Wichita St.", "seed": 1, "win_pct": 77.95, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 4, "win_pct": 13.01, "actual_champion": 1}, {"team": "Evansville", "seed": 2, "win_pct": 7.23, "actual_champion": 0}, {"team": "Illinois St.", "seed": 3, "win_pct": 1.47, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 5, "win_pct": 0.19, "actual_champion": 0}, {"team": "Indiana St.", "seed": 6, "win_pct": 0.11, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 8, "win_pct": 0.04, "actual_champion": 0}, {"team": "Missouri St.", "seed": 7, "win_pct": 0.0, "actual_champion": 0}, {"team": "Bradley", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Drake", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "8-team no byes": [{"team": "Wichita St.", "seed": 1, "win_pct": 70.25, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 4, "win_pct": 13.66, "actual_champion": 1}, {"team": "Evansville", "seed": 2, "win_pct": 11.95, "actual_champion": 0}, {"team": "Illinois St.", "seed": 3, "win_pct": 3.3, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 5, "win_pct": 0.41, "actual_champion": 0}, {"team": "Indiana St.", "seed": 6, "win_pct": 0.25, "actual_champion": 0}, {"team": "Missouri St.", "seed": 7, "win_pct": 0.1, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 8, "win_pct": 0.08, "actual_champion": 0}, {"team": "Bradley", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Drake", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Wichita St.", "seed": 1, "win_pct": 70.88, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 4, "win_pct": 13.15, "actual_champion": 1}, {"team": "Evansville", "seed": 2, "win_pct": 12.06, "actual_champion": 0}, {"team": "Illinois St.", "seed": 3, "win_pct": 3.12, "actual_champion": 0}, {"team": "Indiana St.", "seed": 6, "win_pct": 0.33, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 5, "win_pct": 0.31, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 8, "win_pct": 0.08, "actual_champion": 0}, {"team": "Missouri St.", "seed": 7, "win_pct": 0.06, "actual_champion": 0}, {"team": "Drake", "seed": 10, "win_pct": 0.01, "actual_champion": 0}, {"team": "Bradley", "seed": 9, "win_pct": 0.0, "actual_champion": 0}]}, "2017": {"10-team double bye": [{"team": "Wichita St.", "seed": 2, "win_pct": 78.96, "actual_champion": 1}, {"team": "Illinois St.", "seed": 1, "win_pct": 19.45, "actual_champion": 0}, {"team": "Missouri St.", "seed": 6, "win_pct": 0.66, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 5, "win_pct": 0.61, "actual_champion": 0}, {"team": "Evansville", "seed": 8, "win_pct": 0.2, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 3, "win_pct": 0.06, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 4, "win_pct": 0.04, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.02, "actual_champion": 0}, {"team": "Bradley", "seed": 7, "win_pct": 0.0, "actual_champion": 0}, {"team": "Drake", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "8-team no byes": [{"team": "Wichita St.", "seed": 2, "win_pct": 80.97, "actual_champion": 1}, {"team": "Illinois St.", "seed": 1, "win_pct": 15.93, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 5, "win_pct": 1.65, "actual_champion": 0}, {"team": "Missouri St.", "seed": 6, "win_pct": 0.9, "actual_champion": 0}, {"team": "Evansville", "seed": 8, "win_pct": 0.34, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 3, "win_pct": 0.16, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 4, "win_pct": 0.05, "actual_champion": 0}, {"team": "Bradley", "seed": 7, "win_pct": 0.0, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Drake", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Wichita St.", "seed": 2, "win_pct": 80.68, "actual_champion": 1}, {"team": "Illinois St.", "seed": 1, "win_pct": 16.52, "actual_champion": 0}, {"team": "Loyola Chicago", "seed": 5, "win_pct": 1.78, "actual_champion": 0}, {"team": "Missouri St.", "seed": 6, "win_pct": 0.66, "actual_champion": 0}, {"team": "Evansville", "seed": 8, "win_pct": 0.2, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 4, "win_pct": 0.1, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 3, "win_pct": 0.06, "actual_champion": 0}, {"team": "Bradley", "seed": 7, "win_pct": 0.0, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Drake", "seed": 10, "win_pct": 0.0, "actual_champion": 0}]}, "2018": {"10-team double bye": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 71.13, "actual_champion": 1}, {"team": "Northern Iowa", "seed": 9, "win_pct": 7.17, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 2, "win_pct": 7.04, "actual_champion": 0}, {"team": "Missouri St.", "seed": 7, "win_pct": 4.23, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 3.56, "actual_champion": 0}, {"team": "Evansville", "seed": 8, "win_pct": 2.04, "actual_champion": 0}, {"team": "Illinois St.", "seed": 3, "win_pct": 1.49, "actual_champion": 0}, {"team": "Drake", "seed": 4, "win_pct": 1.48, "actual_champion": 0}, {"team": "Indiana St.", "seed": 6, "win_pct": 1.19, "actual_champion": 0}, {"team": "Valparaiso", "seed": 10, "win_pct": 0.67, "actual_champion": 0}], "8-team no byes": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 61.36, "actual_champion": 1}, {"team": "Missouri St.", "seed": 7, "win_pct": 10.62, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 6.96, "actual_champion": 0}, {"team": "Illinois St.", "seed": 3, "win_pct": 4.97, "actual_champion": 0}, {"team": "Indiana St.", "seed": 6, "win_pct": 4.93, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 2, "win_pct": 4.19, "actual_champion": 0}, {"team": "Drake", "seed": 4, "win_pct": 3.65, "actual_champion": 0}, {"team": "Evansville", "seed": 8, "win_pct": 3.32, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 58.49, "actual_champion": 1}, {"team": "Bradley", "seed": 5, "win_pct": 7.77, "actual_champion": 0}, {"team": "Missouri St.", "seed": 7, "win_pct": 6.61, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 9, "win_pct": 5.76, "actual_champion": 0}, {"team": "Illinois St.", "seed": 3, "win_pct": 5.56, "actual_champion": 0}, {"team": "Indiana St.", "seed": 6, "win_pct": 5.18, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 2, "win_pct": 4.71, "actual_champion": 0}, {"team": "Drake", "seed": 4, "win_pct": 3.45, "actual_champion": 0}, {"team": "Valparaiso", "seed": 10, "win_pct": 1.27, "actual_champion": 0}, {"team": "Evansville", "seed": 8, "win_pct": 1.2, "actual_champion": 0}]}, "2019": {"10-team double bye": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 43.18, "actual_champion": 0}, {"team": "Drake", "seed": 2, "win_pct": 37.32, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 3, "win_pct": 4.91, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 4.8, "actual_champion": 1}, {"team": "Northern Iowa", "seed": 6, "win_pct": 3.39, "actual_champion": 0}, {"team": "Missouri St.", "seed": 4, "win_pct": 3.36, "actual_champion": 0}, {"team": "Indiana St.", "seed": 8, "win_pct": 1.22, "actual_champion": 0}, {"team": "Illinois St.", "seed": 7, "win_pct": 1.14, "actual_champion": 0}, {"team": "Valparaiso", "seed": 9, "win_pct": 0.49, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.19, "actual_champion": 0}], "8-team no byes": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 34.08, "actual_champion": 0}, {"team": "Drake", "seed": 2, "win_pct": 29.75, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 8.89, "actual_champion": 1}, {"team": "Southern Illinois", "seed": 3, "win_pct": 7.97, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 6, "win_pct": 6.98, "actual_champion": 0}, {"team": "Missouri St.", "seed": 4, "win_pct": 6.47, "actual_champion": 0}, {"team": "Indiana St.", "seed": 8, "win_pct": 3.09, "actual_champion": 0}, {"team": "Illinois St.", "seed": 7, "win_pct": 2.77, "actual_champion": 0}, {"team": "Valparaiso", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 34.55, "actual_champion": 0}, {"team": "Drake", "seed": 2, "win_pct": 29.79, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 9.25, "actual_champion": 1}, {"team": "Southern Illinois", "seed": 3, "win_pct": 8.23, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 6, "win_pct": 7.37, "actual_champion": 0}, {"team": "Missouri St.", "seed": 4, "win_pct": 6.56, "actual_champion": 0}, {"team": "Indiana St.", "seed": 8, "win_pct": 1.7, "actual_champion": 0}, {"team": "Illinois St.", "seed": 7, "win_pct": 1.6, "actual_champion": 0}, {"team": "Valparaiso", "seed": 9, "win_pct": 0.61, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.34, "actual_champion": 0}]}, "2021": {"10-team double bye": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 76.82, "actual_champion": 1}, {"team": "Drake", "seed": 2, "win_pct": 17.84, "actual_champion": 0}, {"team": "Missouri St.", "seed": 3, "win_pct": 3.38, "actual_champion": 0}, {"team": "Indiana St.", "seed": 4, "win_pct": 1.11, "actual_champion": 0}, {"team": "Bradley", "seed": 8, "win_pct": 0.34, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 7, "win_pct": 0.28, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 9, "win_pct": 0.13, "actual_champion": 0}, {"team": "Evansville", "seed": 5, "win_pct": 0.06, "actual_champion": 0}, {"team": "Valparaiso", "seed": 6, "win_pct": 0.02, "actual_champion": 0}, {"team": "Illinois St.", "seed": 10, "win_pct": 0.02, "actual_champion": 0}], "8-team no byes": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 77.2, "actual_champion": 1}, {"team": "Drake", "seed": 2, "win_pct": 12.9, "actual_champion": 0}, {"team": "Missouri St.", "seed": 3, "win_pct": 6.3, "actual_champion": 0}, {"team": "Indiana St.", "seed": 4, "win_pct": 2.44, "actual_champion": 0}, {"team": "Bradley", "seed": 8, "win_pct": 0.48, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 7, "win_pct": 0.44, "actual_champion": 0}, {"team": "Valparaiso", "seed": 6, "win_pct": 0.14, "actual_champion": 0}, {"team": "Evansville", "seed": 5, "win_pct": 0.1, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois St.", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Loyola Chicago", "seed": 1, "win_pct": 77.79, "actual_champion": 1}, {"team": "Drake", "seed": 2, "win_pct": 13.14, "actual_champion": 0}, {"team": "Missouri St.", "seed": 3, "win_pct": 5.37, "actual_champion": 0}, {"team": "Indiana St.", "seed": 4, "win_pct": 2.68, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 7, "win_pct": 0.29, "actual_champion": 0}, {"team": "Bradley", "seed": 8, "win_pct": 0.28, "actual_champion": 0}, {"team": "Valparaiso", "seed": 6, "win_pct": 0.21, "actual_champion": 0}, {"team": "Evansville", "seed": 5, "win_pct": 0.15, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 9, "win_pct": 0.06, "actual_champion": 0}, {"team": "Illinois St.", "seed": 10, "win_pct": 0.03, "actual_champion": 0}]}, "2022": {"10-team double bye": [{"team": "Loyola Chicago", "seed": 4, "win_pct": 33.7, "actual_champion": 1}, {"team": "Missouri St.", "seed": 2, "win_pct": 24.28, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 1, "win_pct": 19.47, "actual_champion": 0}, {"team": "Drake", "seed": 3, "win_pct": 16.68, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 3.76, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 6, "win_pct": 1.99, "actual_champion": 0}, {"team": "Valparaiso", "seed": 7, "win_pct": 0.06, "actual_champion": 0}, {"team": "Illinois St.", "seed": 8, "win_pct": 0.06, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "8-team no byes": [{"team": "Loyola Chicago", "seed": 4, "win_pct": 38.16, "actual_champion": 1}, {"team": "Missouri St.", "seed": 2, "win_pct": 23.19, "actual_champion": 0}, {"team": "Drake", "seed": 3, "win_pct": 15.74, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 1, "win_pct": 13.88, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 5.58, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 6, "win_pct": 2.78, "actual_champion": 0}, {"team": "Valparaiso", "seed": 7, "win_pct": 0.36, "actual_champion": 0}, {"team": "Illinois St.", "seed": 8, "win_pct": 0.31, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Loyola Chicago", "seed": 4, "win_pct": 38.33, "actual_champion": 1}, {"team": "Missouri St.", "seed": 2, "win_pct": 25.06, "actual_champion": 0}, {"team": "Drake", "seed": 3, "win_pct": 14.77, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 1, "win_pct": 12.84, "actual_champion": 0}, {"team": "Bradley", "seed": 5, "win_pct": 5.37, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 6, "win_pct": 2.98, "actual_champion": 0}, {"team": "Valparaiso", "seed": 7, "win_pct": 0.29, "actual_champion": 0}, {"team": "Illinois St.", "seed": 8, "win_pct": 0.19, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.17, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.0, "actual_champion": 0}]}, "2023": {"10-team double bye": [{"team": "Drake", "seed": 2, "win_pct": 52.3, "actual_champion": 1}, {"team": "Bradley", "seed": 1, "win_pct": 29.65, "actual_champion": 0}, {"team": "Indiana St.", "seed": 5, "win_pct": 9.11, "actual_champion": 0}, {"team": "Belmont", "seed": 4, "win_pct": 3.81, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 3, "win_pct": 2.82, "actual_champion": 0}, {"team": "Missouri St.", "seed": 6, "win_pct": 2.08, "actual_champion": 0}, {"team": "Murray St.", "seed": 7, "win_pct": 0.13, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 8, "win_pct": 0.1, "actual_champion": 0}, {"team": "Evansville", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois St.", "seed": 10, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 12, "win_pct": 0.0, "actual_champion": 0}], "8-team no byes": [{"team": "Drake", "seed": 2, "win_pct": 54.23, "actual_champion": 1}, {"team": "Bradley", "seed": 1, "win_pct": 20.02, "actual_champion": 0}, {"team": "Indiana St.", "seed": 5, "win_pct": 14.18, "actual_champion": 0}, {"team": "Belmont", "seed": 4, "win_pct": 4.67, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 3, "win_pct": 3.16, "actual_champion": 0}, {"team": "Missouri St.", "seed": 6, "win_pct": 3.11, "actual_champion": 0}, {"team": "Murray St.", "seed": 7, "win_pct": 0.33, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 8, "win_pct": 0.3, "actual_champion": 0}, {"team": "Evansville", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois St.", "seed": 10, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 12, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Drake", "seed": 2, "win_pct": 55.58, "actual_champion": 1}, {"team": "Bradley", "seed": 1, "win_pct": 19.87, "actual_champion": 0}, {"team": "Indiana St.", "seed": 5, "win_pct": 13.49, "actual_champion": 0}, {"team": "Belmont", "seed": 4, "win_pct": 4.39, "actual_champion": 0}, {"team": "Missouri St.", "seed": 6, "win_pct": 3.12, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 3, "win_pct": 3.03, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 8, "win_pct": 0.3, "actual_champion": 0}, {"team": "Murray St.", "seed": 7, "win_pct": 0.22, "actual_champion": 0}, {"team": "Evansville", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois St.", "seed": 10, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 12, "win_pct": 0.0, "actual_champion": 0}]}, "2024": {"10-team double bye": [{"team": "Drake", "seed": 2, "win_pct": 38.26, "actual_champion": 1}, {"team": "Indiana St.", "seed": 3, "win_pct": 33.47, "actual_champion": 0}, {"team": "Bradley", "seed": 1, "win_pct": 21.45, "actual_champion": 0}, {"team": "Belmont", "seed": 5, "win_pct": 3.1, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 4, "win_pct": 2.34, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 6, "win_pct": 0.83, "actual_champion": 0}, {"team": "Missouri St.", "seed": 9, "win_pct": 0.29, "actual_champion": 0}, {"team": "Murray St.", "seed": 8, "win_pct": 0.2, "actual_champion": 0}, {"team": "Illinois St.", "seed": 7, "win_pct": 0.03, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.03, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 12, "win_pct": 0.0, "actual_champion": 0}], "8-team no byes": [{"team": "Indiana St.", "seed": 3, "win_pct": 35.92, "actual_champion": 0}, {"team": "Drake", "seed": 2, "win_pct": 28.96, "actual_champion": 1}, {"team": "Bradley", "seed": 1, "win_pct": 23.73, "actual_champion": 0}, {"team": "Belmont", "seed": 5, "win_pct": 4.99, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 4, "win_pct": 4.39, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 6, "win_pct": 1.37, "actual_champion": 0}, {"team": "Murray St.", "seed": 8, "win_pct": 0.57, "actual_champion": 0}, {"team": "Illinois St.", "seed": 7, "win_pct": 0.07, "actual_champion": 0}, {"team": "Missouri St.", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 12, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Indiana St.", "seed": 3, "win_pct": 36.45, "actual_champion": 0}, {"team": "Drake", "seed": 2, "win_pct": 28.73, "actual_champion": 1}, {"team": "Bradley", "seed": 1, "win_pct": 23.04, "actual_champion": 0}, {"team": "Belmont", "seed": 5, "win_pct": 5.32, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 4, "win_pct": 4.25, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 6, "win_pct": 1.4, "actual_champion": 0}, {"team": "Missouri St.", "seed": 9, "win_pct": 0.51, "actual_champion": 0}, {"team": "Murray St.", "seed": 8, "win_pct": 0.24, "actual_champion": 0}, {"team": "Illinois St.", "seed": 7, "win_pct": 0.06, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.0, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 12, "win_pct": 0.0, "actual_champion": 0}]}, "2025": {"10-team double bye": [{"team": "Drake", "seed": 1, "win_pct": 64.38, "actual_champion": 1}, {"team": "Bradley", "seed": 2, "win_pct": 22.87, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 3, "win_pct": 5.49, "actual_champion": 0}, {"team": "Illinois St.", "seed": 5, "win_pct": 3.06, "actual_champion": 0}, {"team": "Belmont", "seed": 4, "win_pct": 2.82, "actual_champion": 0}, {"team": "Murray St.", "seed": 7, "win_pct": 0.75, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 8, "win_pct": 0.3, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.18, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 6, "win_pct": 0.14, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.01, "actual_champion": 0}, {"team": "Valparaiso", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Missouri St.", "seed": 12, "win_pct": 0.0, "actual_champion": 0}], "8-team no byes": [{"team": "Drake", "seed": 1, "win_pct": 60.67, "actual_champion": 1}, {"team": "Bradley", "seed": 2, "win_pct": 17.95, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 3, "win_pct": 9.25, "actual_champion": 0}, {"team": "Illinois St.", "seed": 5, "win_pct": 4.5, "actual_champion": 0}, {"team": "Belmont", "seed": 4, "win_pct": 4.43, "actual_champion": 0}, {"team": "Murray St.", "seed": 7, "win_pct": 1.6, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 6, "win_pct": 0.97, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 8, "win_pct": 0.63, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.0, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.0, "actual_champion": 0}, {"team": "Valparaiso", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Missouri St.", "seed": 12, "win_pct": 0.0, "actual_champion": 0}], "10-team 6 single byes": [{"team": "Drake", "seed": 1, "win_pct": 60.47, "actual_champion": 1}, {"team": "Bradley", "seed": 2, "win_pct": 19.17, "actual_champion": 0}, {"team": "Northern Iowa", "seed": 3, "win_pct": 9.47, "actual_champion": 0}, {"team": "Illinois St.", "seed": 5, "win_pct": 4.73, "actual_champion": 0}, {"team": "Belmont", "seed": 4, "win_pct": 3.93, "actual_champion": 0}, {"team": "Murray St.", "seed": 7, "win_pct": 1.16, "actual_champion": 0}, {"team": "Illinois Chicago", "seed": 6, "win_pct": 0.61, "actual_champion": 0}, {"team": "Southern Illinois", "seed": 8, "win_pct": 0.32, "actual_champion": 0}, {"team": "Indiana St.", "seed": 9, "win_pct": 0.12, "actual_champion": 0}, {"team": "Evansville", "seed": 10, "win_pct": 0.02, "actual_champion": 0}, {"team": "Valparaiso", "seed": 11, "win_pct": 0.0, "actual_champion": 0}, {"team": "Missouri St.", "seed": 12, "win_pct": 0.0, "actual_champion": 0}]}}, "analysis": {"2015": {"10-team double bye": {"model_pick_team": "Wichita St.", "model_pick_seed": "1", "model_pick_win_pct": 53.62, "actual_champion": "northern iowa", "actual_sim_win_pct": 43.74, "model_correct": "0"}, "8-team no byes": {"model_pick_team": "Northern Iowa", "model_pick_seed": "2", "model_pick_win_pct": 51.65, "actual_champion": "northern iowa", "actual_sim_win_pct": 51.65, "model_correct": "1"}, "10-team 6 single byes": {"model_pick_team": "Northern Iowa", "model_pick_seed": "2", "model_pick_win_pct": 52.84, "actual_champion": "northern iowa", "actual_sim_win_pct": 52.84, "model_correct": "1"}}, "2016": {"10-team double bye": {"model_pick_team": "Wichita St.", "model_pick_seed": "1", "model_pick_win_pct": 77.95, "actual_champion": "northern iowa", "actual_sim_win_pct": 13.01, "model_correct": "0"}, "8-team no byes": {"model_pick_team": "Wichita St.", "model_pick_seed": "1", "model_pick_win_pct": 70.25, "actual_champion": "northern iowa", "actual_sim_win_pct": 13.66, "model_correct": "0"}, "10-team 6 single byes": {"model_pick_team": "Wichita St.", "model_pick_seed": "1", "model_pick_win_pct": 70.88, "actual_champion": "northern iowa", "actual_sim_win_pct": 13.15, "model_correct": "0"}}, "2017": {"10-team double bye": {"model_pick_team": "Wichita St.", "model_pick_seed": "2", "model_pick_win_pct": 78.96, "actual_champion": "wichita state", "actual_sim_win_pct": 78.96, "model_correct": "1"}, "8-team no byes": {"model_pick_team": "Wichita St.", "model_pick_seed": "2", "model_pick_win_pct": 80.97, "actual_champion": "wichita state", "actual_sim_win_pct": 80.97, "model_correct": "1"}, "10-team 6 single byes": {"model_pick_team": "Wichita St.", "model_pick_seed": "2", "model_pick_win_pct": 80.68, "actual_champion": "wichita state", "actual_sim_win_pct": 80.68, "model_correct": "1"}}, "2018": {"10-team double bye": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 71.13, "actual_champion": "loyola chicago", "actual_sim_win_pct": 71.13, "model_correct": "1"}, "8-team no byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 61.36, "actual_champion": "loyola chicago", "actual_sim_win_pct": 61.36, "model_correct": "1"}, "10-team 6 single byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 58.49, "actual_champion": "loyola chicago", "actual_sim_win_pct": 58.49, "model_correct": "1"}}, "2019": {"10-team double bye": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 43.18, "actual_champion": "bradley", "actual_sim_win_pct": 4.8, "model_correct": "0"}, "8-team no byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 34.08, "actual_champion": "bradley", "actual_sim_win_pct": 8.89, "model_correct": "0"}, "10-team 6 single byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 34.55, "actual_champion": "bradley", "actual_sim_win_pct": 9.25, "model_correct": "0"}}, "2021": {"10-team double bye": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 76.82, "actual_champion": "loyola chicago", "actual_sim_win_pct": 76.82, "model_correct": "1"}, "8-team no byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 77.2, "actual_champion": "loyola chicago", "actual_sim_win_pct": 77.2, "model_correct": "1"}, "10-team 6 single byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "1", "model_pick_win_pct": 77.79, "actual_champion": "loyola chicago", "actual_sim_win_pct": 77.79, "model_correct": "1"}}, "2022": {"10-team double bye": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "4", "model_pick_win_pct": 33.7, "actual_champion": "loyola chicago", "actual_sim_win_pct": 33.7, "model_correct": "1"}, "8-team no byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "4", "model_pick_win_pct": 38.16, "actual_champion": "loyola chicago", "actual_sim_win_pct": 38.16, "model_correct": "1"}, "10-team 6 single byes": {"model_pick_team": "Loyola Chicago", "model_pick_seed": "4", "model_pick_win_pct": 38.33, "actual_champion": "loyola chicago", "actual_sim_win_pct": 38.33, "model_correct": "1"}}, "2023": {"10-team double bye": {"model_pick_team": "Drake", "model_pick_seed": "2", "model_pick_win_pct": 52.3, "actual_champion": "drake", "actual_sim_win_pct": 52.3, "model_correct": "1"}, "8-team no byes": {"model_pick_team": "Drake", "model_pick_seed": "2", "model_pick_win_pct": 54.23, "actual_champion": "drake", "actual_sim_win_pct": 54.23, "model_correct": "1"}, "10-team 6 single byes": {"model_pick_team": "Drake", "model_pick_seed": "2", "model_pick_win_pct": 55.58, "actual_champion": "drake", "actual_sim_win_pct": 55.58, "model_correct": "1"}}, "2024": {"10-team double bye": {"model_pick_team": "Drake", "model_pick_seed": "2", "model_pick_win_pct": 38.26, "actual_champion": "drake", "actual_sim_win_pct": 38.26, "model_correct": "1"}, "8-team no byes": {"model_pick_team": "Indiana St.", "model_pick_seed": "3", "model_pick_win_pct": 35.92, "actual_champion": "drake", "actual_sim_win_pct": 28.96, "model_correct": "0"}, "10-team 6 single byes": {"model_pick_team": "Indiana St.", "model_pick_seed": "3", "model_pick_win_pct": 36.45, "actual_champion": "drake", "actual_sim_win_pct": 28.73, "model_correct": "0"}}, "2025": {"10-team double bye": {"model_pick_team": "Drake", "model_pick_seed": "1", "model_pick_win_pct": 64.38, "actual_champion": "drake", "actual_sim_win_pct": 64.38, "model_correct": "1"}, "8-team no byes": {"model_pick_team": "Drake", "model_pick_seed": "1", "model_pick_win_pct": 60.67, "actual_champion": "drake", "actual_sim_win_pct": 60.67, "model_correct": "1"}, "10-team 6 single byes": {"model_pick_team": "Drake", "model_pick_seed": "1", "model_pick_win_pct": 60.47, "actual_champion": "drake", "actual_sim_win_pct": 60.47, "model_correct": "1"}}}, "overall_sim": {"10-team double bye": {"1": 47.71, "2": 32.98, "3": 6.98, "4": 6.41, "5": 2.83, "6": 1.06, "7": 0.66, "8": 0.45, "9": 0.83, "10": 0.09, "11": 0.0, "12": 0.0}, "8-team no byes": {"1": 42.23, "2": 31.57, "3": 8.68, "4": 8.07, "5": 4.74, "6": 2.16, "7": 1.63, "8": 0.91, "9": 0.0, "10": 0.0, "11": 0.0, "12": 0.0}, "10-team 6 single byes": {"1": 41.85, "2": 32.18, "3": 8.61, "4": 7.95, "5": 4.84, "6": 2.21, "7": 1.03, "8": 0.45, "9": 0.72, "10": 0.17, "11": 0.0, "12": 0.0}}, "overall_actual": {"1": 30.0, "2": 40.0, "4": 20.0, "5": 10.0}, "seed_champ_counts": {"2": 4, "4": 2, "1": 3, "5": 1}, "accuracy": {"10-team double bye": {"correct": 7, "total": 10}, "8-team no byes": {"correct": 7, "total": 10}, "10-team 6 single byes": {"correct": 7, "total": 10}}, "n_years": 10, "bracket_imgs": {"10-team double bye": "brackets/double_bye.svg", "8-team no byes": "brackets/no_byes.svg", "10-team 6 single byes": "brackets/six_byes.svg"}};
+let charts = [];
+let viewMode = 'bar';
+let chalkFormat = DATA.formats[0];
+let currentYear = null;
+
+const FMT_LABEL = {
+  '10-team double bye':    '10-Team Double Bye (2027)',
+  '8-team no byes':        '8-Team Bracket',
+  '10-team 6 single byes': '10-Team with 6 Byes (Current)'
+};
+const FMT_SHORT = {
+  '10-team double bye':    'Double Bye',
+  '8-team no byes':        '8-Team',
+  '10-team 6 single byes': '6 Byes'
+};
+const BLUE = '#2563eb';
+const AMBER = '#f59e0b';
+
+function destroyCharts() { charts.forEach(c => c.destroy()); charts = []; }
+
+/* ── Nav ── */
+function buildNav() {
+  const opts = DATA.years.map(y => `<option value="${y}">${y}</option>`).join('');
+  document.getElementById('nav').innerHTML =
+    `<span class="brand">Arch Madness</span>
+     <a class="tab" id="tab-home" href="#" onclick="show('home');return false">Home</a>
+     <select class="year-sel" id="yr-sel" onchange="if(this.value)show('year',+this.value)">
+       <option value="">Year</option>${opts}
+     </select>
+     <span class="spacer"></span>
+     <a class="tab" id="tab-about" href="#" onclick="show('about');return false">About</a>`;
+}
+
+function setNav(view) {
+  document.getElementById('tab-home').classList.toggle('active', view === 'home');
+  document.getElementById('tab-about').classList.toggle('active', view === 'about');
+  document.getElementById('yr-sel').value = view === 'year' ? String(currentYear) : '';
+}
+
+function show(view, year) {
+  destroyCharts();
+  if (view === 'home')  { renderHome();       setNav('home'); }
+  if (view === 'about') { renderAbout();      setNav('about'); }
+  if (view === 'year')  { currentYear = year; renderYear(year); setNav('year'); }
+  window.scrollTo(0, 0);
+}
+
+/* ── Home ── */
+function renderHome() {
+  const n  = DATA.n_years;
+  const c1 = DATA.seed_champ_counts[1] || 0;
+  const c2 = DATA.seed_champ_counts[2] || 0;
+
+  let html = `
+    <div class="hero">
+      <h1>Over the Last ${n} Years</h1>
+      <p class="subtitle">
+        The #1 seed won <em>${c1} of ${n}</em> championships
+        &nbsp;&middot;&nbsp;
+        The #2 seed won <em>${c2} of ${n}</em>
+      </p>
+    </div>
+    <div class="toggle-bar">
+      <span>View as:</span>
+      <button class="tog active" data-m="bar"   onclick="setViewMode('bar')">Bar Chart</button>
+      <button class="tog"        data-m="table" onclick="setViewMode('table')">Table</button>
+    </div>`;
+
+  DATA.formats.forEach((fmt, i) => {
+    const sim = DATA.overall_sim[fmt];
+    const s1  = (sim[1] || 0).toFixed(1);
+    const s2  = (sim[2] || 0).toFixed(1);
+    const isNew = fmt === '10-team double bye';
+    html += `
+    <div class="fmt-sec">
+      <h2>${FMT_LABEL[fmt]}${isNew ? ' <span class="badge-new">NEW 2027</span>' : ''}</h2>
+      <div class="seed-row">
+        <div class="seed-stat"><div class="sv">${s1}%</div><div class="sk">#1 Seed avg win %</div></div>
+        <div class="seed-stat"><div class="sv">${s2}%</div><div class="sk">#2 Seed avg win %</div></div>
+      </div>
+      <details class="accordion">
+        <summary>About this format</summary>
+        <img src="${DATA.bracket_imgs[fmt]}" alt="${fmt} bracket">
+      </details>
+      <div id="fc${i}"></div>
+    </div>`;
+  });
+
+  document.getElementById('main').innerHTML = html;
+  DATA.formats.forEach((fmt, i) => drawFmtChart(i, fmt));
+}
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.querySelectorAll('.tog').forEach(b => b.classList.toggle('active', b.dataset.m === mode));
+  DATA.formats.forEach((fmt, i) => { if (document.getElementById('fc'+i)) drawFmtChart(i, fmt); });
+}
+
+function drawFmtChart(idx, fmt) {
+  const el = document.getElementById('fc' + idx);
+  if (!el) return;
+  charts = charts.filter(c => { if (c.canvas && c.canvas.parentElement === el) { c.destroy(); return false; } return true; });
+
+  const sim   = DATA.overall_sim[fmt];
+  const seeds = Object.keys(sim).map(Number).sort((a,b) => a-b);
+
+  if (viewMode === 'table') {
+    let t = '<table><thead><tr><th>Seed</th><th>Avg Sim Win %</th><th>Actual Championships</th></tr></thead><tbody>';
+    seeds.forEach(s => {
+      t += `<tr><td>#${s}</td><td>${sim[s].toFixed(1)}%</td><td>${DATA.seed_champ_counts[s] || 0}</td></tr>`;
+    });
+    el.innerHTML = t + '</tbody></table>';
+  } else {
+    el.innerHTML = `<canvas id="fc-cv${idx}"></canvas>`;
+    charts.push(new Chart(document.getElementById('fc-cv'+idx), {
+      type: 'bar',
+      data: {
+        labels: seeds.map(s => '#' + s),
+        datasets: [
+          { label: 'Simulated %', data: seeds.map(s => sim[s]),              backgroundColor: BLUE },
+          { label: 'Actual %',    data: seeds.map(s => DATA.overall_actual[s] || 0), backgroundColor: AMBER }
+        ]
+      },
+      options: { responsive: true,
+        plugins: { legend: { labels: { boxWidth: 12 } } },
+        scales:  { x: { ticks: { font: { size: 11 } } },
+                   y: { beginAtZero: true, ticks: { callback: v => v + '%' } } }
+      }
+    }));
+  }
+}
+
+/* ── About ── */
+function renderAbout() {
+  let brackets = '';
+  DATA.formats.forEach(fmt => {
+    brackets += `<h3>${FMT_LABEL[fmt]}</h3><img src="${DATA.bracket_imgs[fmt]}" alt="${fmt}">`;
+  });
+  document.getElementById('main').innerHTML = `
+    <div class="about">
+      <h1>How This Works</h1>
+      <h2>Data Source</h2>
+      <p>Team efficiency ratings come from <strong>T-Rank</strong> (barttorvik.com): adjusted
+         offensive efficiency (AdjOE), defensive efficiency (AdjDE), and tempo (AdjT) for every
+         MVC team, 2015&ndash;2025 (2020 skipped &mdash; tournament cancelled).</p>
+      <h2>Win Probability</h2>
+      <p>Each game is decided by the two teams' efficiency margins on a neutral court:</p>
+      <pre>expected_margin = AdjEM_A - AdjEM_B      (AdjEM = AdjOE - AdjDE)
+sigma           = 11.9 &times; sqrt(avg_pace / 67.5)
+p_win           = normal_cdf(expected_margin / sigma)</pre>
+      <ul>
+        <li><code>sigma = 11.9</code> is the KenPom empirical standard deviation for college basketball.</li>
+        <li>Tempo scaling: faster games have more scoring variance.</li>
+        <li>No home-court adjustment &mdash; all MVC games at Enterprise Center, St. Louis.</li>
+      </ul>
+      <h2>Simulation</h2>
+      <p>Each year &times; format is played <strong>10,000 times</strong>. A team's championship %
+         is how many of those runs it won. Seeds are actual MVC seeds (set by conference record),
+         not by efficiency.</p>
+      <h2>The Three Bracket Formats</h2>
+      ${brackets}
+    </div>`;
+}
+
+/* ── Year ── */
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+
+function renderYear(year) {
+  const m      = document.getElementById('main');
+  const teams  = DATA.teams[year] || [];
+  const champ  = DATA.champions[year];
+  const cName  = champ ? champ.champion : '';
+
+  // Quick-nav
+  let html = `<h1>${year} Arch Madness</h1>
+    <div class="quick-nav">
+      <button class="qbtn" onclick="scrollTo('sec-sims')">Simulations</button>
+      <button class="qbtn" onclick="scrollTo('sec-field')">Field</button>
+      <button class="qbtn" onclick="scrollTo('sec-actual')">Actual Results</button>
+      <button class="qbtn" onclick="scrollTo('sec-chalk')">Chalk Bracket</button>
+    </div>`;
+
+  // Simulations
+  html += `<div id="sec-sims" class="sec"><h2>Title Odds by Format</h2><div class="cards">`;
+  DATA.formats.forEach((f, i) => {
+    const ana     = DATA.analysis[year][f];
+    const correct = ana.model_correct === '1';
+    html += `<div class="card">
+      <h3>${FMT_LABEL[f]}</h3>
+      <div class="pick">${ana.model_pick_team} <span class="pct">${ana.model_pick_win_pct.toFixed(1)}%</span></div>
+      <div>Model pick &middot; <span class="badge ${correct?'y':'n'}">${correct?'CORRECT':'MISS'}</span></div>
+      <canvas id="yrc${i}"></canvas>
+      <ul class="toplist">`;
+    DATA.summary[year][f].slice(0, 5).forEach(t => {
+      html += `<li><span>${t.seed}. ${t.team}</span><span>${t.win_pct.toFixed(1)}%</span></li>`;
+    });
+    html += `</ul></div>`;
+  });
+  html += `</div></div>`;
+
+  // Field
+  html += `<div id="sec-field" class="sec"><h2>Field</h2>
+    <table><thead><tr><th>Seed</th><th>Team</th><th>T-Rank</th><th>AdjEM</th><th>AdjT</th><th>Record</th></tr></thead><tbody>`;
+  teams.forEach(t => {
+    const cls = t.team === cName ? ' class="champ"' : '';
+    const em  = (t.adj_em >= 0 ? '+' : '') + t.adj_em.toFixed(1);
+    html += `<tr${cls}><td>${t.seed}</td><td>${t.team}</td><td>${t.trank}</td><td>${em}</td><td>${t.adj_t.toFixed(1)}</td><td>${t.record}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // Actual results
+  html += `<div id="sec-actual" class="sec"><h2>Actual Result</h2>`;
+  if (champ) {
+    const cSt = teams.find(t => t.team === champ.champion);
+    const rSt = teams.find(t => t.team === champ.runner_up);
+    const sc  = champ.champion_score && champ.runner_up_score
+                ? `${champ.champion_score}–${champ.runner_up_score}` : '';
+    html += `<div class="result-cards">`;
+    html += rcCard('win',  'Champion',  champ.champion,  champ.champion_seed,  sc, cSt);
+    html += rcCard('lose', 'Runner-Up', champ.runner_up, champ.runner_up_seed, sc, rSt);
+    html += `</div>`;
+    if (champ.notes) html += `<p class="sub" style="margin-top:10px">${champ.notes}</p>`;
+  }
+  html += `</div>`;
+
+  // Chalk
+  html += `<div id="sec-chalk" class="chalk-sec sec">
+    <h2>Chalk Bracket</h2>
+    <p class="sub">If the higher-efficiency team wins every game.</p>
+    <div class="chalk-opts" id="chalk-opts"></div>
+    <div id="chalk-out"></div>
+  </div>`;
+
+  m.innerHTML = html;
+
+  // Chalk option buttons
+  const optsEl = document.getElementById('chalk-opts');
+  DATA.formats.forEach(fmt => {
+    const b = document.createElement('button');
+    b.className = 'copt' + (fmt === chalkFormat ? ' active' : '');
+    b.textContent = FMT_SHORT[fmt];
+    b.dataset.fmt = fmt;
+    b.onclick = () => setChalkFmt(fmt);
+    optsEl.appendChild(b);
+  });
+  renderChalk(year);
+
+  // Year charts
+  DATA.formats.forEach((f, i) => {
+    const rows = DATA.summary[year][f].slice().sort((a,b) => a.seed - b.seed);
+    charts.push(new Chart(document.getElementById('yrc' + i), {
+      type: 'bar',
+      data: {
+        labels: rows.map(r => '#' + r.seed),
+        datasets: [{ label: 'Win %', data: rows.map(r => r.win_pct),
+          backgroundColor: rows.map(r => r.actual_champion ? AMBER : BLUE) }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v + '%' } } } }
+    }));
+  });
+}
+
+function rcCard(cls, label, name, seed, score, stats) {
+  let h = `<div class="rc ${cls}">
+    <div class="rc-lbl">${label}</div>
+    <div class="rc-name">${name} <span class="rc-seed">${seed ? '#' + seed : ''}</span></div>
+    ${score ? '<div class="rc-score">' + score + '</div>' : ''}`;
+  if (stats) {
+    const em = (stats.adj_em >= 0 ? '+' : '') + stats.adj_em.toFixed(1);
+    h += `<div class="stats-grid">
+      <div class="stat-box"><div class="bv">${em}</div><div class="bk">AdjEM</div></div>
+      <div class="stat-box"><div class="bv">${stats.adj_t.toFixed(1)}</div><div class="bk">AdjT</div></div>
+      <div class="stat-box"><div class="bv">#${stats.trank}</div><div class="bk">T-Rank</div></div>
+    </div>`;
+  }
+  return h + '</div>';
+}
+
+/* ── Chalk ── */
+function setChalkFmt(fmt) {
+  chalkFormat = fmt;
+  document.querySelectorAll('.copt').forEach(b => b.classList.toggle('active', b.dataset.fmt === fmt));
+  renderChalk(currentYear);
+}
+
+function chalkBracket(fmt, teams) {
+  const s = {};
+  teams.forEach(t => s[t.seed] = t);
+  const w = (a, b) => !a ? b : !b ? a : (a.adj_em >= b.adj_em ? a : b);
+  const mu = (a, b) => `#${a ? a.seed : '?'} ${a ? a.team : '?'} vs #${b ? b.seed : '?'} ${b ? b.team : '?'}`;
+  const rounds = [];
+
+  if (fmt === '10-team double bye') {
+    const r1 = [w(s[3],s[10]), w(s[4],s[9]), w(s[5],s[8]), w(s[6],s[7])];
+    rounds.push({ name: 'First Round', games: [
+      { mu: mu(s[3],s[10]), winner: r1[0] }, { mu: mu(s[4],s[9]), winner: r1[1] },
+      { mu: mu(s[5],s[8]), winner: r1[2] }, { mu: mu(s[6],s[7]), winner: r1[3] },
+    ]});
+    const qf = [w(r1[0],r1[1]), w(r1[2],r1[3])];
+    rounds.push({ name: 'Quarterfinals', games: [
+      { mu: `${r1[0]?r1[0].team:'?'} vs ${r1[1]?r1[1].team:'?'}`, winner: qf[0] },
+      { mu: `${r1[2]?r1[2].team:'?'} vs ${r1[3]?r1[3].team:'?'}`, winner: qf[1] },
+    ]});
+    const sf = [w(s[1],qf[0]), w(s[2],qf[1])];
+    rounds.push({ name: 'Semifinals', games: [
+      { mu: `#1 ${s[1]?s[1].team:'?'} vs ${qf[0]?qf[0].team:'?'}`, winner: sf[0] },
+      { mu: `#2 ${s[2]?s[2].team:'?'} vs ${qf[1]?qf[1].team:'?'}`, winner: sf[1] },
+    ]});
+    const champ = w(sf[0],sf[1]);
+    rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ }]});
+    return { rounds, champion: champ };
+  }
+
+  if (fmt === '10-team 6 single byes') {
+    const r1 = [w(s[7],s[10]), w(s[8],s[9])];
+    rounds.push({ name: 'First Round', games: [
+      { mu: mu(s[7],s[10]), winner: r1[0] }, { mu: mu(s[8],s[9]), winner: r1[1] },
+    ]});
+    const qf = [w(s[1],r1[1]), w(s[2],r1[0]), w(s[3],s[6]), w(s[4],s[5])];
+    rounds.push({ name: 'Quarterfinals', games: [
+      { mu: `#1 ${s[1]?s[1].team:'?'} vs ${r1[1]?r1[1].team:'?'}`, winner: qf[0] },
+      { mu: `#2 ${s[2]?s[2].team:'?'} vs ${r1[0]?r1[0].team:'?'}`, winner: qf[1] },
+      { mu: mu(s[3],s[6]), winner: qf[2] }, { mu: mu(s[4],s[5]), winner: qf[3] },
+    ]});
+    const sf = [w(qf[0],qf[3]), w(qf[1],qf[2])];
+    rounds.push({ name: 'Semifinals', games: [
+      { mu: `${qf[0]?qf[0].team:'?'} vs ${qf[3]?qf[3].team:'?'}`, winner: sf[0] },
+      { mu: `${qf[1]?qf[1].team:'?'} vs ${qf[2]?qf[2].team:'?'}`, winner: sf[1] },
+    ]});
+    const champ = w(sf[0],sf[1]);
+    rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ }]});
+    return { rounds, champion: champ };
+  }
+
+  // 8-team no byes
+  const r1 = [w(s[1],s[8]), w(s[2],s[7]), w(s[3],s[6]), w(s[4],s[5])];
+  rounds.push({ name: 'First Round', games: [
+    { mu: mu(s[1],s[8]), winner: r1[0] }, { mu: mu(s[2],s[7]), winner: r1[1] },
+    { mu: mu(s[3],s[6]), winner: r1[2] }, { mu: mu(s[4],s[5]), winner: r1[3] },
+  ]});
+  const sf = [w(r1[0],r1[3]), w(r1[1],r1[2])];
+  rounds.push({ name: 'Semifinals', games: [
+    { mu: `${r1[0]?r1[0].team:'?'} vs ${r1[3]?r1[3].team:'?'}`, winner: sf[0] },
+    { mu: `${r1[1]?r1[1].team:'?'} vs ${r1[2]?r1[2].team:'?'}`, winner: sf[1] },
+  ]});
+  const champ = w(sf[0],sf[1]);
+  rounds.push({ name: 'Championship', games: [{ mu: `${sf[0]?sf[0].team:'?'} vs ${sf[1]?sf[1].team:'?'}`, winner: champ }]});
+  return { rounds, champion: champ };
+}
+
+function renderChalk(year) {
+  const out = document.getElementById('chalk-out');
+  if (!out) return;
+  const teams = DATA.teams[year];
+  if (!teams) { out.innerHTML = '<p class="sub">No team data for this year.</p>'; return; }
+  const { rounds, champion } = chalkBracket(chalkFormat, teams);
+  let html = '<div class="chalk-rounds">';
+  rounds.forEach(r => {
+    html += `<div class="chalk-round"><h4>${r.name}</h4>`;
+    r.games.forEach(g => {
+      html += `<div class="cg"><div class="cg-mu">${g.mu}</div><div class="cg-w">&rarr; ${g.winner ? g.winner.team : '?'}</div></div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  if (champion) {
+    const em = (champion.adj_em >= 0 ? '+' : '') + champion.adj_em.toFixed(1);
+    html += `<div class="chalk-champ">
+      <div class="cc-lbl">Chalk Champion</div>
+      <div class="cc-name">#${champion.seed} ${champion.team}</div>
+      <div class="cc-stats">AdjEM ${em} &middot; AdjT ${champion.adj_t.toFixed(1)} &middot; T-Rank #${champion.trank}</div>
+    </div>`;
+  }
+  out.innerHTML = html;
+}
+
+buildNav();
+show('home');
+</script>
+</body>
+</html>

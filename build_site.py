@@ -8,7 +8,7 @@ import json
 import os
 from collections import defaultdict
 
-YEARS = [2025, 2024, 2023, 2022, 2021, 2019, 2018, 2017, 2016, 2015]
+YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2019, 2018, 2017, 2016]
 FORMATS = ["10-team double bye", "8-team no byes", "10-team 6 single byes", "10-team 6 byes reseeded"]
 
 def read_csv(path):
@@ -208,8 +208,10 @@ HTML = """<!DOCTYPE html>
         flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
   .fmt-sec-hdr h2 { margin: 0; font-size: 19px; display: flex; align-items: center; gap: 10px; }
   .fmt-tog { display: flex; gap: 6px; align-items: center; }
+  .fmt-tog-mobile { display: none; }
+  @media (max-width: 600px) { .fmt-tog-desktop { display: none; } .fmt-tog-mobile { display: flex; gap: 6px; margin-bottom: 8px; } }
   .badge-new { background: #7c3aed; color: #fff; font-size: 11px; font-weight: 700;
-        padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
+        padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; white-space: nowrap; }
   .seed-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
   .seed-stat { background: var(--bg); border-radius: 8px; padding: 10px 16px; }
   .seed-stat .sv { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
@@ -365,7 +367,7 @@ function renderHome() {
     <div class="fmt-sec">
       <div class="fmt-sec-hdr">
         <h2>${FMT_LABEL[fmt]}${isNew ? ' <span class="badge-new">NEW 2027</span>' : ''}</h2>
-        <div class="fmt-tog">
+        <div class="fmt-tog fmt-tog-desktop">
           <button class="tog ${viewMode==='bar'?'active':''}"   data-m="bar"   onclick="setViewMode('bar')">Bar Chart</button>
           <button class="tog ${viewMode==='table'?'active':''}" data-m="table" onclick="setViewMode('table')">Table</button>
         </div>
@@ -378,6 +380,10 @@ function renderHome() {
         <summary>About this format</summary>
         <img src="${DATA.bracket_imgs[fmt]}" alt="${fmt} bracket">
       </details>
+      <div class="fmt-tog-mobile">
+        <button class="tog ${viewMode==='bar'?'active':''}"   data-m="bar"   onclick="setViewMode('bar')">Bar Chart</button>
+        <button class="tog ${viewMode==='table'?'active':''}" data-m="table" onclick="setViewMode('table')">Table</button>
+      </div>
       <div id="fc${i}"></div>
     </div>`;
   });

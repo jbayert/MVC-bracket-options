@@ -507,7 +507,7 @@ p_win           = normal_cdf(expected_margin / sigma)</pre>
 }
 
 /* ── Year ── */
-function scrollTo(id) {
+function scrollToSection(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -525,10 +525,10 @@ function renderYear(year) {
   // Quick-nav
   let html = `<h1>${year} Arch Madness</h1>
     <div class="quick-nav">
-      <button class="qbtn" onclick="scrollTo('sec-sims')">Simulations</button>
-      <button class="qbtn" onclick="scrollTo('sec-field')">Teams</button>
-      <button class="qbtn" onclick="scrollTo('sec-actual')">Actual Results</button>
-      <button class="qbtn" onclick="scrollTo('sec-chalk')">Chalk Bracket</button>
+      <button class="qbtn" onclick="scrollToSection('sec-sims')">Simulations</button>
+      <button class="qbtn" onclick="scrollToSection('sec-field')">Teams</button>
+      <button class="qbtn" onclick="scrollToSection('sec-actual')">Actual Results</button>
+      <button class="qbtn" onclick="scrollToSection('sec-chalk')">Chalk Bracket</button>
     </div>`;
 
   // Simulations

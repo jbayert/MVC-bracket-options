@@ -1,0 +1,21 @@
+year,seed,team,team_trank,won_title,eliminated_by,eliminated_by_trank,round,bad_loss
+2016,1,Wichita State,10,0,Northern Iowa,56,semifinal,0
+2016,2,Evansville,77,0,Northern Iowa,56,final,0
+2017,1,Illinois State,40,0,Wichita State,12,final,0
+2017,2,Wichita State,12,1,,,,0
+2018,1,Loyola Chicago,41,1,,,,0
+2018,2,Southern Illinois,148,0,Illinois State,142,semifinal,1
+2019,1,Loyola Chicago,105,0,Bradley,153,semifinal,1
+2019,2,Drake,119,0,Northern Iowa,171,semifinal,1
+2021,1,Loyola Chicago,13,1,,,,0
+2021,2,Drake,79,0,Loyola Chicago,13,final,0
+2022,1,Northern Iowa,94,0,Loyola Chicago,39,semifinal,0
+2022,2,Missouri State,80,0,Drake,82,semifinal,0
+2023,1,Bradley,92,0,Drake,53,final,0
+2023,2,Drake,53,1,,,,0
+2024,1,Bradley,60,0,Drake,51,semifinal,0
+2024,2,Drake,51,1,,,,0
+2025,1,Drake,52,1,,,,0
+2025,2,Bradley,86,0,Drake,52,final,0
+2026,1,Belmont,81,0,Drake,217,quarterfinal,1
+2026,2,Bradley,138,0,Northern Iowa,77,semifinal,0

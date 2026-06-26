@@ -1,1 +1,11 @@
+# Scraped barttorvik sidecars (contain third-party analytics keys; we only parse the .htm)
 T-rank data/*_files/
+
+# Python
+__pycache__/
+
+# Stale build output (site now builds to docs/)
+site/
+
+# Local editor/agent state
+.claude/

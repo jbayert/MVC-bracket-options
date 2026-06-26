@@ -15,6 +15,12 @@ def read_csv(path):
     with open(path, encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
+def read_csv_safe(path):
+    try:
+        return read_csv(path)
+    except FileNotFoundError:
+        return []
+
 def build_data():
     year_set = set(YEARS)
     trank = read_csv("data/trank_mvc.csv")
@@ -107,6 +113,28 @@ def build_data():
         total = sum(1 for r in analysis if r["format"] == fmt)
         accuracy[fmt] = {"correct": correct, "total": total}
 
+    # Bad losses (top-2 seed eliminated by a team ranked > 100)
+    bad_sim = defaultdict(lambda: defaultdict(dict))
+    for r in read_csv_safe("data/bad_losses_sim.csv"):
+        y = int(r["year"])
+        if y in year_set:
+            bad_sim[y][r["format"]][int(r["seed"])] = float(r["bad_loss_pct"])
+
+    bad_actual = []
+    for r in read_csv_safe("data/bad_losses_actual.csv"):
+        y = int(r["year"])
+        if y not in year_set:
+            continue
+        def _int(v): return int(v) if v not in ("", None) else None
+        bad_actual.append({
+            "year": y, "seed": int(r["seed"]), "team": r["team"],
+            "team_trank": _int(r["team_trank"]),
+            "won_title": int(r["won_title"]),
+            "eliminated_by": r["eliminated_by"],
+            "eliminated_by_trank": _int(r["eliminated_by_trank"]),
+            "round": r["round"], "bad_loss": int(r["bad_loss"]),
+        })
+
     return {
         "years": YEARS,
         "formats": FORMATS,
@@ -120,6 +148,8 @@ def build_data():
         "accuracy": accuracy,
         "n_years": n_years,
         "bracket_imgs": BRACKET_IMGS,
+        "bad_sim": {y: dict(v) for y, v in bad_sim.items()},
+        "bad_actual": bad_actual,
     }
 
 BRACKET_IMGS = {
@@ -326,20 +356,23 @@ function buildNav() {
      <select class="year-sel" id="yr-sel" onchange="if(this.value)show('year',+this.value)">
        <option value="">Year</option>${opts}
      </select>
+     <a class="tab" id="tab-badloss" href="#" onclick="show('badloss');return false">Bad Losses</a>
      <a class="tab" id="tab-about" href="#" onclick="show('about');return false">About</a>`;
 }
 
 function setNav(view) {
   document.getElementById('tab-home').classList.toggle('active', view === 'home');
+  document.getElementById('tab-badloss').classList.toggle('active', view === 'badloss');
   document.getElementById('tab-about').classList.toggle('active', view === 'about');
   document.getElementById('yr-sel').value = view === 'year' ? String(currentYear) : '';
 }
 
 function show(view, year) {
   destroyCharts();
-  if (view === 'home')  { renderHome();       setNav('home');  location.hash = 'home'; }
-  if (view === 'about') { renderAbout();      setNav('about'); location.hash = 'about'; }
-  if (view === 'year')  { currentYear = year; renderYear(year); setNav('year'); location.hash = 'year/' + year; }
+  if (view === 'home')    { renderHome();        setNav('home');    location.hash = 'home'; }
+  if (view === 'badloss') { renderBadLosses();   setNav('badloss'); location.hash = 'badloss'; }
+  if (view === 'about')   { renderAbout();       setNav('about');   location.hash = 'about'; }
+  if (view === 'year')    { currentYear = year;  renderYear(year);  setNav('year'); location.hash = 'year/' + year; }
   window.scrollTo(0, 0);
 }
 
@@ -792,10 +825,95 @@ function renderChalk(year) {
   out.innerHTML = html;
 }
 
+/* ── Bad Losses ── */
+function renderBadLosses() {
+  const fmts = DATA.formats;
+  const actualByYearSeed = {};
+  (DATA.bad_actual || []).forEach(r => { actualByYearSeed[r.year + '-' + r.seed] = r; });
+
+  // Summary: actual bad-loss count per seed + avg sim bad-loss % per format
+  const actualCount = {1: 0, 2: 0}, known = {1: 0, 2: 0};
+  (DATA.bad_actual || []).forEach(r => { known[r.seed]++; if (r.bad_loss) actualCount[r.seed]++; });
+
+  const simAvg = {};
+  fmts.forEach(f => {
+    let sum = 0, n = 0;
+    DATA.years.forEach(y => {
+      const d = DATA.bad_sim[y] && DATA.bad_sim[y][f];
+      if (d) { sum += (d[1] || 0) + (d[2] || 0); n += 2; }
+    });
+    simAvg[f] = n ? (sum / n) : 0;
+  });
+
+  let html = `
+    <div class="card" style="margin-bottom:20px;padding:24px 28px">
+      <h1 style="font-size:clamp(1.6rem,3.5vw,2.2rem);margin:0 0 8px">Bad Losses</h1>
+      <p class="sub" style="margin:0">
+        A <strong>bad loss</strong> is when a top-2 seed is knocked out by a team ranked
+        <strong>worse than #100</strong> in national T-Rank. Most MVC teams sit outside the
+        top 100, so an early upset usually counts. Byes shorten a top seed's path and cut
+        their exposure &mdash; visible below in the simulated rates.
+      </p>
+    </div>`;
+
+  // Summary cards
+  html += '<div class="seed-row" style="margin-bottom:8px">';
+  html += `<div class="seed-stat"><div class="sv">${actualCount[1]}/${known[1]||'?'}</div><div class="sk">#1 seeds with an actual bad loss</div></div>`;
+  html += `<div class="seed-stat"><div class="sv">${actualCount[2]}/${known[2]||'?'}</div><div class="sk">#2 seeds with an actual bad loss</div></div>`;
+  html += '</div>';
+
+  html += '<div class="fmt-sec"><div class="fmt-sec-hdr"><h2>Average simulated bad-loss rate</h2></div>';
+  html += '<div class="seed-row">';
+  fmts.forEach(f => {
+    const isNew = f === '10-team double bye';
+    html += `<div class="seed-stat"><div class="sv">${simAvg[f].toFixed(1)}%</div>`
+          + `<div class="sk">${FMT_SHORT[f]}${isNew ? ' (NEW)' : ''}</div></div>`;
+  });
+  html += '</div></div>';
+
+  // Per-seed tables
+  [1, 2].forEach(seed => {
+    html += `<div class="fmt-sec"><div class="fmt-sec-hdr"><h2>#${seed} Seeds</h2></div>`;
+    html += '<div style="overflow-x:auto"><table><thead>';
+    html += `<tr><th colspan="3"></th>`
+          + `<th colspan="${fmts.length}" style="text-align:center;border-bottom:1px solid var(--line)">`
+          + `Chance of a bad loss if the format had been&hellip;</th></tr>`;
+    html += '<tr><th>Year</th><th>Team (rank)</th><th>Actual outcome</th>';
+    fmts.forEach(f => { html += `<th>${FMT_SHORT[f]}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    DATA.years.slice().sort((a, b) => a - b).forEach(y => {
+      const a = actualByYearSeed[y + '-' + seed];
+      let teamCell = '&mdash;', outcome = '<span class="sub">no data</span>';
+      if (a) {
+        teamCell = `${a.team}${a.team_trank != null ? ' <span class="sub">#' + a.team_trank + '</span>' : ''}`;
+        if (a.won_title) outcome = '<span style="color:var(--good);font-weight:600">Won title</span>';
+        else {
+          const r = a.eliminated_by_trank != null ? ' #' + a.eliminated_by_trank : '';
+          const rd = a.round ? ', ' + a.round : '';
+          outcome = `Lost to ${a.eliminated_by}<span class="sub">${r}${rd}</span>`;
+          if (a.bad_loss) outcome += ' <span class="badge n">BAD</span>';
+        }
+      }
+      html += `<tr><td>${y}</td><td>${teamCell}</td><td>${outcome}</td>`;
+      fmts.forEach(f => {
+        const d = DATA.bad_sim[y] && DATA.bad_sim[y][f];
+        const v = d ? (d[seed] || 0) : null;
+        html += `<td>${v == null ? '&mdash;' : v.toFixed(1) + '%'}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  });
+
+  document.getElementById('main').innerHTML = html;
+}
+
 buildNav();
 (function() {
   const h = location.hash.replace('#', '');
   if (h.startsWith('year/')) { const y = parseInt(h.split('/')[1]); if (DATA.years.includes(y)) { show('year', y); return; } }
+  if (h === 'badloss') { show('badloss'); return; }
   if (h === 'about') { show('about'); return; }
   show('home');
 })();

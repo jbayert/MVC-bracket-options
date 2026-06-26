@@ -22,7 +22,7 @@ FATIGUE_COEFF = 0.75  # points lost per extra game already played
 REST_CAP = 3          # max rest days credited (caps pre-tournament layoff)
 FRESH = REST_CAP      # rest credited to a team's first game
 
-YEARS = [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
+YEARS = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026]
 
 # ---------------------------------------------------------------------------
 # Win probability (base + optional rest term)

@@ -518,7 +518,7 @@ function renderAbout() {
       <h2>Data Source</h2>
       <p>Team efficiency ratings come from <strong>T-Rank</strong> (barttorvik.com): adjusted
          offensive efficiency (AdjOE), defensive efficiency (AdjDE), and tempo (AdjT) for every
-         MVC team, 2015&ndash;2025 (2020 skipped &mdash; tournament cancelled).</p>
+         MVC team, 2016&ndash;2026 (2020 skipped &mdash; tournament cancelled).</p>
       <h2>Win Probability</h2>
       <p>Each game is decided by the two teams' efficiency margins on a neutral court:</p>
       <pre>expected_margin = AdjEM_A - AdjEM_B      (AdjEM = AdjOE - AdjDE)

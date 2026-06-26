@@ -16,8 +16,9 @@ def read_csv(path):
         return list(csv.DictReader(f))
 
 def build_data():
+    year_set = set(YEARS)
     trank = read_csv("data/trank_mvc.csv")
-    champs = read_csv("data/arch_madness_champions.csv")
+    champs = [r for r in read_csv("data/arch_madness_champions.csv") if int(r["year"]) in year_set]
     summary = read_csv("data/simulation_summary.csv")
     analysis = read_csv("data/analysis_by_year.csv")
 
@@ -350,7 +351,7 @@ function renderHome() {
 
   let html = `
     <div class="card" style="margin-bottom:20px;padding:24px 28px">
-      <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.1;margin:0 0 10px">Over the Last ${n} Years <span style="font-size:.55em;font-weight:400;color:var(--muted)">(sans 2020)</span></h1>
+      <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.1;margin:0 0 10px">Over the Last ${n} Tournaments <span style="font-size:.55em;font-weight:400;color:var(--muted)">(sans 2020)</span></h1>
       <p style="font-size:clamp(1rem,2.5vw,1.15rem);color:var(--muted);margin:0">
         The #1 seed won <strong style="color:var(--accent)">${c1} of ${n}</strong> championships
         &nbsp;&middot;&nbsp;
